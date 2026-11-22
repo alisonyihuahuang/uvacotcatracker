@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#5b2d8e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -154,6 +156,18 @@ dialog .pb{padding:16px}
 .fgrid label{font-size:12px;color:var(--mu);display:block;margin-bottom:3px}
 .fgrid input,.fgrid select,.fgrid textarea{width:100%}
 dialog{max-height:90vh;overflow:auto}
+#lock{position:fixed;inset:0;z-index:100;background:linear-gradient(160deg,#3b1c5e,#1c0d30);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;padding-top:max(24px,env(safe-area-inset-top))}
+#lock.on{display:flex}
+#lock .lk{width:min(340px,100%);text-align:center}
+#lock img{width:84px;height:84px;border-radius:20px;margin-bottom:14px}
+#lock h2{font-size:20px;margin:0 0 4px}#lock p{color:#d9c9ee;font-size:13px;margin:0 0 18px;line-height:1.6}
+#lock input{width:100%;font-size:20px!important;text-align:center;letter-spacing:4px;padding:12px;border-radius:12px;border:0;margin-bottom:10px}
+#lock .btn{width:100%;padding:12px;font-size:16px;background:#7cb342;color:#14280a}
+#lock .err{color:#ffb4a8;min-height:20px;font-size:13px;margin-bottom:6px}
+#lock .fg{background:none;border:0;color:#cdbbe6;text-decoration:underline;margin-top:16px;font-size:13px;cursor:pointer}
+.bd[hidden],[hidden]{display:none!important}
+.lockbtn{border:0;background:var(--g3);color:var(--g);border-radius:99px;padding:5px 10px;font-size:12px;cursor:pointer}
+.pw{display:grid;gap:8px;margin:10px 0}.pw input{width:100%}
 .set{display:grid;gap:12px;max-width:640px}
 .set .box p{font-size:13px;color:var(--mu);margin:4px 0 10px;line-height:1.6}
 .set .row{display:flex;gap:8px;flex-wrap:wrap}
@@ -170,7 +184,7 @@ dialog{max-height:90vh;overflow:auto}
     <button class="tab" data-v="ana"><span class="ic">📊</span>分析</button>
     <button class="tab" data-v="set"><span class="ic">⚙️</span>設定</button>
   </div>
-  <div class="sync" id="sync"></div>
+  <div class="sync" id="sync"></div><button class="lockbtn" id="lockNow" hidden>🔒 鎖定</button>
 </div></div>
 
 <div class="wrap" id="main"></div>
@@ -179,6 +193,13 @@ dialog{max-height:90vh;overflow:auto}
 <div class="panel" id="panel"><div class="ph"><h2 id="pt"></h2><button class="x" id="px">×</button></div><div class="pb" id="pbody"></div><div class="pf" id="pfoot"></div></div>
 <dialog id="dlg"><div class="pb" id="dbody"></div></dialog>
 <div class="toast" id="toast"></div>
+<div id="lock" aria-modal="true" role="dialog"><div class="lk">
+  <img src="icons/icon-192.png" alt="">
+  <h2>葡眾客戶需求追蹤</h2><p>App 已上鎖，請輸入密碼</p>
+  <form id="lkf" autocomplete="off"><input type="password" id="lkp" placeholder="密碼" autocomplete="current-password" enterkeyhint="go">
+  <div class="err" id="lke"></div><button class="btn" id="lkb" type="submit">解鎖</button></form>
+  <button class="fg" id="lkfg" type="button">忘記密碼？</button>
+</div></div>
 
 <script>
 const P = [["995生技營養品","A01","180ml × 24瓶/箱",5980,164,"黃豆發酵液、乳酸菌、香菇及靈芝菌絲體發酵液"],["995生技營養品（甘味）","A01","180ml × 24瓶/箱",5980,164,"同 995 配方，甘味版本"],["葡眾360計劃","A01","30包/盒",11088,320,"單日包：原味餐包×2、康爾喜×3、迪康×1、全身調理膠囊×2"],["康爾喜乳酸菌顆粒","A01","90條/盒",1890,52,"乳酸菌凍乾品、異麥芽寡醣、β-胡蘿蔔素"],["永生福朗膠囊","A01","120粒/瓶",1770,48,"黃豆發酵物、靈芝菌絲體、酵母菌、乳酸菌"],["樟芝益菌絲體生技營養品","A02","180ml × 24瓶/箱",5980,164,"樟芝菌絲體發酵液、舞茸、巴西蘑菇、桑黃、雲芝"],["UVACO樟芝菌絲體滴粒","A02","約45粒 × 2瓶/盒",5500,160,"樟芝菌絲體發酵液粉及萃取物、紅藜麥"],["葡眾樂優乳酸菌顆粒","A02","90條/盒",2100,60,"4 株乳酸菌、白芝麻、杏仁、五味子"],["艾逸膠囊","A02","100粒/瓶",1344,36,"靈芝菌絲體、陳皮、桑椹、黃耆、當歸"],["艾逸膠囊（純素）","A02","90粒/瓶",1344,36,"同艾逸配方，植物性膠囊"],["百克斯膠囊","A02","100粒/瓶",1386,40,"蝙蝠蛾擬青黴菌絲體、黨參、冬蟲夏草菌絲體"],["百克斯膠囊（純素）","A02","90粒/瓶",1386,40,"同百克斯配方，植物性膠囊"],["葡眾寧康福膠囊","A02","120粒/瓶",3150,92,"桑黃、蛹蟲草菌絲體、牛初乳、綠茶"],["康爾喜（N）乳酸菌顆粒","A03","1.5g × 90條/盒",1960,52,"乳酸菌、木瓜及鳳梨酵素、半乳寡糖"],["康爾暢乳酸菌球顆粒","A03","0.8g × 30條/盒",2050,60,"多株 GK 系列乳酸菌（植物、鼠李糖、羅伊氏等）"],["衛傑膠囊","A03","100粒/瓶",1260,36,"LGG 鼠李糖乳酸菌、加氏乳酸菌、山藥、猴頭菇"],["衛傑膠囊（奶素）","A03","90粒/瓶",1260,36,"同衛傑配方，植物性膠囊"],["紓衛菓軟糖","A03","15顆/袋",700,20,"仙人掌橄欖葉萃取、猴頭菇菌絲體"],["康爾動乳酸菌球顆粒","A04","0.8g × 30條/盒",1950,56,"多株乳酸菌、酪酸菌、桑黃菌絲體"],["葡眾活逸康猴頭菇菌絲體顆粒","A04","2g × 90條/盒",5796,172,"猴頭菇菌絲體、丹參、桂圓、薑黃"],["貝力耐膠囊","A04","120粒/瓶",2800,80,"葡萄糖胺、軟骨素、膠原蛋白、鈣"],["葡眾猴頭菇菌絲體膠囊","A04","90粒/瓶",3700,104,"猴頭菇菌絲體粉"],["欣悅康沖泡飲","A05","10g × 30包/盒",3100,88,"糙薏仁、黑糖、紅豆、老薑、乳酸菌"],["醣利佳膠囊","A05","100粒/瓶",2330,64,"桑黃菌絲體、乳酸菌、白腎豆、苦瓜"],["扶百生膠囊","A05","100粒/瓶",2005,56,"馬卡、黃精、杜仲葉、管花肉蓯蓉"],["暢且利膠囊","A05","100粒/瓶",1764,48,"亞麻籽、南瓜籽、蛹蟲草、鋅／硒酵母"],["青采孅膠囊","A05","100粒/瓶",2180,60,"幾丁聚糖、藤黃果、綠茶、乳酸菌"],["葡眾靚妍飲","A05","20ml × 15入/盒",2150,60,"金針菇乳酸菌菁華、蔓越莓、洛神花"],["芯潤飲","A05","20ml × 15入/盒",2150,60,"西印度櫻桃、越桔、乳酸菌發酵液"],["清明亮膠囊","A06","120粒/瓶",3500,100,"熟地、枸杞、山桑子、葉黃素"],["清明亮膠囊（純素）","A06","115粒/瓶",3500,100,"同清明亮配方，植物性膠囊"],["小悅光飲","A06","20ml × 15入/盒",1400,40,"藍莓發酵液、葉黃素、西印度櫻桃"],["康悅兒乳酸菌顆粒","A07","1.5g × 90包/盒",1764,48,"GKJOY、GKF3 乳酸菌"],["康貝寧膠囊","A07","100粒/瓶",1880,52,"蜜環菌菌絲體、L-色胺酸、茯苓、紅棗"],["迪康沖泡飲","A08","12g × 30包/盒",1764,48,"山楂、陳皮、枸杞、丹參、人參"],["力盛沖泡飲","A08","5g × 30包/盒",1764,48,"草決明、黃耆、枸杞、羅漢果、靈芝"],["禾玥膠囊","A08","100粒/瓶",1400,40,"紅棗、山楂、紅葡萄葉、靈芝菌絲體"],["葡眾貝納Q10膠囊","A08","120粒/瓶",3350,96,"紅麴、薑黃、納豆激酶、輔酵素 Q10"],["葡眾原味餐包沖泡飲","A09","14g × 30包/盒",1344,36,"燕麥、豆漿粉、大豆蛋白、蓮子"],["葡眾餐包沖泡飲","A09","15g × 30包/盒",1344,36,"燕麥、大豆蛋白、蓮子、靈芝菌絲體"],["葡眾銀燦餐包沖泡飲","A09","14g × 30包/盒",1480,40,"燕麥、綜合穀粉、黑芝麻"],["桑本力元沖泡飲","A09","14g × 30包/盒",1480,40,"大豆蛋白、黑芝麻、桑黃菌絲體"],["奇芮（愛犬專用益生菌粉）","B01","1.2g × 75條/盒",900,20,"膠原蛋白、多株乳酸菌"],["Hi Kiss+ 平衡洗面乳","C01","130g/支",700,20,"乳酸菌發酵液、透明質酸、仙人掌花"],["YaYa Mini 舒緩膏","C02","7g × 6瓶/盒",1400,40,"尤加利油、丁香油、樟芝、茶樹精油"],["蘆露蘆薈膠（50g × 3支）","C02","50g × 3支/盒",840,24,"蟬花、庫拉索蘆薈、積雪草"],["蘆露蘆薈膠（180g）","C02","180g/支",840,24,"蟬花、庫拉索蘆薈、積雪草"],["葡眾淨膚皂","C02","95g × 3盒/組",870,24,"乳酸菌發酵液、海鹽、香茅油、薑油"],["葡眾蟬花護手霜","C02","30g × 3支/盒",840,24,"蟬花、乳油木果油、洋甘菊"],["沁潔私密潔淨慕斯","C02","150g/瓶",980,28,"乳酸、泛酸醇、乳酸桿菌發酵濾液"],["貝益潔護效牙膏","C03","140g × 3盒/組",700,20,"木糖醇、乳酸菌發酵液、氟化鈉"],["Hi Spray 清新噴霧","C03","10ml × 3瓶/盒",570,16,"乳酸菌發酵液、百里香、薄荷"],["CordiBella 甦活保濕露","D01","150ml",1550,44,"蟬花菌絲體、白茅根、透明質酸鈉"],["CordiBella 甦活精萃","D01","30ml",1500,44,"醣基海藻糖、蟬花、胜肽"],["CordiBella 甦活緊緻霜","D01","50g",2500,72,"燕麥仁油、蟬花、羊胎盤萃取"],["995造型悠遊卡","U01","19g/個",380,0,"造型悠遊卡"],["康悅兒收納包（組）","U01","2個1組",300,0,"rPET 回收布料、黃銅拉鍊"]];
@@ -197,16 +218,71 @@ function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");c
 
 /* ---------------- storage ---------------- */
 let customers={}; // id -> doc
+/* ===== 資料清理：所有讀入的資料（本機或備份檔）都必須通過這裡 ===== */
+const RX={id:/^[A-Za-z0-9_-]{1,40}$/,date:/^\d{4}-\d{2}-\d{2}$/,time:/^\d{2}:\d{2}$/,iso:/^\d{4}-\d{2}-\d{2}T[\d:.]+Z?$/};
+const sStr=(v,max)=>typeof v==="string"?v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g,"").slice(0,max):"";
+const sDate=v=>typeof v==="string"&&RX.date.test(v)?v:"";
+const sTime=v=>typeof v==="string"&&RX.time.test(v)?v:"";
+const sInt=(v,min,max,def)=>{const n=Math.round(Number(v));return Number.isFinite(n)&&n>=min&&n<=max?n:def};
+const sId=v=>typeof v==="string"&&RX.id.test(v)?v:uid();
+function sanitizeCustomer(c){
+  if(!c||typeof c!=="object"||Array.isArray(c)||c.kind!=="customer")return null;
+  const name=sStr(c.name,60).trim();if(!name)return null;
+  const items=(Array.isArray(c.items)?c.items:[]).slice(0,100).map(it=>{
+    if(!it||typeof it!=="object"||!PBN[it.p])return null;
+    const o={id:sId(it.id),p:it.p,stage:sInt(it.stage,0,5,0),next:sDate(it.next),note:sStr(it.note,300),updated:sDate(it.updated)};
+    const b=sDate(it.buy);if(b){o.buy=b;o.qty=sInt(it.qty,1,999,1);o.days=sInt(it.days,1,3650,30);o.extra=sInt(it.extra,0,3650,0)}
+    if(Array.isArray(it.orders))o.orders=it.orders.slice(0,500).map(x=>x&&sDate(x.d)?{d:sDate(x.d),q:sInt(x.q,1,999,1)}:null).filter(Boolean);
+    return o}).filter(Boolean);
+  const appts=(Array.isArray(c.appts)?c.appts:[]).slice(0,300).map(a=>{
+    if(!a||typeof a!=="object"||!sDate(a.date)||!sTime(a.time))return null;
+    const al=String(a.alarm??"");
+    return {id:sId(a.id),date:sDate(a.date),time:sTime(a.time),dur:sInt(a.dur,5,1440,60),place:sStr(a.place,120),purpose:sStr(a.purpose,40),note:sStr(a.note,300),
+      alarm:ALARMS.some(x=>x[0]===al)?al:"60",done:a.done===true}}).filter(Boolean);
+  const log=(Array.isArray(c.log)?c.log:[]).slice(0,200).map(l=>l&&sDate(l.d)?{d:sDate(l.d),t:sStr(l.t,300)}:null).filter(Boolean);
+  return {id:sId(c.id),kind:"customer",name,contact:sStr(c.contact,80),tags:(Array.isArray(c.tags)?c.tags:[]).filter(t=>typeof t==="string"&&SUB[t]&&t!=="U01").slice(0,15),
+    note:sStr(c.note,500),created:sDate(c.created),updated:typeof c.updated==="string"&&RX.iso.test(c.updated)?c.updated:"",items,appts,log};
+}
+function sanitizeAll(obj){const out={};if(obj&&typeof obj==="object"&&!Array.isArray(obj))Object.values(obj).slice(0,2000).forEach(c=>{const s=sanitizeCustomer(c);if(s){while(out[s.id])s.id=uid();out[s.id]=s}});return out}
 const KEY="uvaco_tracker";
+/* ===== 加密（WebCrypto：PBKDF2-SHA256 → AES-256-GCM） ===== */
+const ITER=600000,TE=new TextEncoder(),TD=new TextDecoder();
+const b64=u=>{let s="";u.forEach(x=>s+=String.fromCharCode(x));return btoa(s)};
+const unb64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+const hasCrypto=()=>!!(window.crypto&&crypto.subtle&&window.isSecureContext);
+async function deriveKey(pass,salt,iter){const base=await crypto.subtle.importKey("raw",TE.encode(pass),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
+async function sealJSON(obj,key,salt,iter){const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,TE.encode(JSON.stringify(obj)));
+  return {v:1,kdf:"PBKDF2-SHA256",iter,salt:b64(salt),iv:b64(iv),ct:b64(new Uint8Array(ct))}}
+async function openJSON(pkg,pass){if(!pkg||!pkg.salt||!pkg.iv||!pkg.ct)throw new Error("bad");
+  const iter=sInt(pkg.iter,100000,5000000,ITER);const salt=unb64(pkg.salt);const key=await deriveKey(pass,salt,iter);
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(pkg.iv)},key,unb64(pkg.ct));return {data:JSON.parse(TD.decode(pt)),key,salt,iter}}
+let lockKey=null,lockSalt=null,lockIter=ITER,hiddenAt=0;
+const LK=KEY+"_enc";
+const isLockOn=()=>{try{return !!localStorage.getItem(LK)}catch(e){return false}};
+function lockAfter(){try{return sInt(localStorage.getItem(KEY+"_lockafter"),0,60,1)}catch(e){return 1}}
+function showLock(msg){$("#lock").classList.add("on");$("#lke").textContent=msg||"";$("#lkp").value="";setTimeout(()=>$("#lkp").focus(),100)}
+function lockNow(){if(!isLockOn())return;lockKey=null;customers={};try{$("#dlg").close()}catch(e){}showPanel(false);$("#main").innerHTML="";showLock()}
+function failState(){try{return JSON.parse(localStorage.getItem(KEY+"_fail")||'{"n":0,"until":0}')}catch(e){return {n:0,until:0}}}
 const store={mode:"local",
   async init(){
-    try{customers=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){customers={}}
+    if(isLockOn()){$("#lockNow").hidden=false;showLock(hasCrypto()?"":"此瀏覽器不支援加密，請用 https 網址開啟");setSync("🔒 資料已加密");return}
+    try{customers=sanitizeAll(JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){customers={}}
     let persisted=false;
     try{if(navigator.storage&&navigator.storage.persist)persisted=await navigator.storage.persist()}catch(e){}
     setSync("📱 資料只存在這支手機"+(persisted?"（已設為持久保存）":"・請定期備份"),!persisted);
     render();
   },
-  _write(){try{localStorage.setItem(KEY,JSON.stringify(customers));localStorage.setItem(KEY+"_saved",new Date().toISOString())}catch(e){toast("手機儲存空間不足，請先備份")}},
+  _q:Promise.resolve(),
+  _write(){
+    if(isLockOn()&&!lockKey)return this._q; // 已上鎖時不寫入，避免蓋掉加密資料
+    const snap=JSON.parse(JSON.stringify(customers));
+    this._q=this._q.then(async()=>{try{
+      if(lockKey){const pkg=await sealJSON(snap,lockKey,lockSalt,lockIter);localStorage.setItem(LK,JSON.stringify(pkg));localStorage.removeItem(KEY)}
+      else localStorage.setItem(KEY,JSON.stringify(snap));
+      localStorage.setItem(KEY+"_saved",new Date().toISOString())}catch(e){toast("儲存失敗：手機空間不足，請先備份")}});
+    return this._q},
   async save(c){c.updated=new Date().toISOString();customers[c.id]=c;this._write();render()},
   async del(id){delete customers[id];this._write();render()}
 };
@@ -232,11 +308,11 @@ function custEst(c){return (c.items||[]).reduce((a,i)=>a+monthlyEst(i),0)}
 function monthSV(ym){let t=0;allItems().forEach(({it})=>ordersOf(it).forEach(o=>{if(o.d&&o.d.slice(0,7)===ym)t+=o.q*SVof(it.p)}));return t}
 function ensureBuy(it){if(BUY.includes(+it.stage)&&!it.buy){it.buy=today();it.qty=it.qty||1;it.days=it.days||30;it.extra=0;syncOrder(it)}}
 function rpFields(it,attr){if(!BUY.includes(+it.stage))return"";const o=runOut(it);
-  return `<div class="rp"><div><label>購買日</label><input type="date" ${attr("buy")} value="${it.buy||""}"></div>
+  return `<div class="rp"><div><label>購買日</label><input type="date" ${attr("buy")} value="${esc(it.buy||"")}"></div>
   <div><label>數量</label><input type="number" min="1" ${attr("qty")} value="${it.qty||1}"></div>
   <div><label>每份可用天數</label><input type="number" min="1" ${attr("days")} value="${it.days||30}"></div>
   <div class="out">🔁 ${o?outLabel(o):"填購買日即可計算"}<span class="svs" style="float:right">本次 ${it.qty||1} × ${SVof(it.p)} = ${fmtSV((it.qty||1)*SVof(it.p))} SV・月估 ${fmtSV(monthlyEst(it))} SV${ordersOf(it).length>1?`・累計 ${fmtSV(itemSV(it))} SV（${ordersOf(it).length} 次）`:""}</span></div></div>`}
-const stgTag=s=>`<span class="stg s${s}">${STG[s]}</span>`;
+const stgTag=s=>{s=sInt(s,0,5,0);return `<span class="stg s${s}">${STG[s]}</span>`};
 
 /* ---------------- views ---------------- */
 let view="prod",pf={cat:"ALL",q:"",only:false},cf={q:""};
@@ -296,7 +372,7 @@ function vCust(){
   <button class="btn" id="addC">＋ 新增客戶</button><button class="btn sec" id="csv">複製 CSV</button></div>
   ${list.length?`<div class="cards">${list.map(c=>{const act=(c.items||[]).filter(i=>ACTIVE.includes(+i.stage));
     const nx=act.filter(i=>i.next).sort((a,b)=>a.next.localeCompare(b.next))[0];
-    return `<div class="cc" data-id="${c.id}"><div class="nm">${esc(c.name)}</div><div class="ct">${esc(c.contact||"")}${custSV(c)?`<span class="svs" style="float:right">累計 ${fmtSV(custSV(c))} SV・月估 ${fmtSV(custEst(c))}</span>`:""}</div>
+    return `<div class="cc" data-id="${esc(c.id)}"><div class="nm">${esc(c.name)}</div><div class="ct">${esc(c.contact||"")}${custSV(c)?`<span class="svs" style="float:right">累計 ${fmtSV(custSV(c))} SV・月估 ${fmtSV(custEst(c))}</span>`:""}</div>
     <div>${(c.tags||[]).map(t=>`<span class="tag">${SUB[t]}</span>`).join("")}</div>
     <div style="margin-top:4px">${act.slice(0,4).map(i=>`<div style="font-size:12.5px">${esc(i.p)} ${stgTag(i.stage)}</div>`).join("")}${act.length>4?`<div class="muted" style="font-size:12px">…另 ${act.length-4} 項</div>`:""}</div>
     ${(()=>{const a=(c.appts||[]).filter(a=>!a.done&&a.date>=today()).sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time))[0];return a?`<div class="due">📍 ${apptWhen(a)}・${esc(a.purpose||"拜訪")}${a.place?"＠"+esc(a.place):""}</div>`:""})()}
@@ -312,19 +388,19 @@ function vTodo(){
   const list=dueList(7);const rl=repurList(14);const ap=upcomingAppts(14);
   const apHtml=`<div class="bar" style="margin-top:4px"><button class="btn" id="bulkCal">📅 30 天內全部加入行事曆</button><button class="btn sec" id="newAp">＋ 新增客戶行程</button></div>
   <h4>📍 客戶行程（14 天內）</h4>`+(ap.length?`<table class="stack"><thead><tr><th>時間</th><th>客戶</th><th>目的</th><th>地點</th><th></th></tr></thead><tbody>
-  ${ap.map(({c,a},k)=>`<tr><td><b>${apptWhen(a)}</b></td><td><a href="#" data-oc="${c.id}">${esc(c.name)}</a><div class="ser">${esc(c.contact||"")}</div></td>
+  ${ap.map(({c,a},k)=>`<tr><td><b>${apptWhen(a)}</b></td><td><a href="#" data-oc="${esc(c.id)}">${esc(c.name)}</a><div class="ser">${esc(c.contact||"")}</div></td>
   <td>${esc(a.purpose||"拜訪")}${a.note?`<div class="ser">${esc(a.note)}</div>`:""}</td><td>${a.place?`📍 <a href="${mapURL(a.place)}" target="_blank" rel="noopener">${esc(a.place)}</a>`:'<span class="muted">—</span>'}</td>
   <td style="white-space:nowrap"><button class="btn sec sm" data-tac="${k}">📅</button> <button class="btn sec sm" data-tae="${k}">編輯</button></td></tr>`).join("")}</tbody></table>`
   :`<div class="empty" style="padding:18px">14 天內沒有排定的客戶行程。</div>`);
   const rpHtml=`<h4>🔁 回購提醒（14 天內用完）</h4>`+(rl.length?`<table class="stack"><thead><tr><th>預計用完</th><th>客戶</th><th>產品</th><th class="hide-m">上次購買</th><th class="r">SV</th><th></th></tr></thead><tbody>
-  ${rl.map(({c,it,out},k)=>`<tr><td>${outLabel(out)}</td><td><a href="#" data-oc="${c.id}">${esc(c.name)}</a><div class="ser">${esc(c.contact||"")}</div></td>
+  ${rl.map(({c,it,out},k)=>`<tr><td>${outLabel(out)}</td><td><a href="#" data-oc="${esc(c.id)}">${esc(c.name)}</a><div class="ser">${esc(c.contact||"")}</div></td>
   <td>${esc(it.p)}</td><td class="hide-m muted">${it.buy}・${it.qty||1} 份 × ${it.days||30} 天</td><td class="r svs">${fmtSV((it.qty||1)*SVof(it.p))}</td>
-  <td style="white-space:nowrap"><button class="btn sm" data-rb="${k}">已回購</button> <button class="btn sec sm" data-rs="${k}">延後 7 天</button> <button class="btn sec sm" data-calr="${c.id}|${it.id}">📅</button></td></tr>`).join("")}</tbody></table>`
+  <td style="white-space:nowrap"><button class="btn sm" data-rb="${k}">已回購</button> <button class="btn sec sm" data-rs="${k}">延後 7 天</button> <button class="btn sec sm" data-calr="${esc(c.id)}|${esc(it.id)}">📅</button></td></tr>`).join("")}</tbody></table>`
   :`<div class="empty" style="padding:18px">14 天內沒有快用完的產品。客戶進入「已購買／定期回購」並填購買日後，會自動出現在這裡。</div>`)+`<h4>📅 跟進（7 天內與逾期）</h4>`;
   $("#main").innerHTML=kpis()+apHtml+rpHtml+(list.length?`<table class="stack"><thead><tr><th>跟進日</th><th>客戶</th><th>產品</th><th>階段</th><th class="hide-m">備註</th><th></th></tr></thead><tbody>
-  ${list.map(({c,it},k)=>`<tr><td>${dueLabel(it.next)}</td><td><a href="#" data-oc="${c.id}">${esc(c.name)}</a><div class="ser">${esc(c.contact||"")}</div></td>
+  ${list.map(({c,it},k)=>`<tr><td>${dueLabel(it.next)}</td><td><a href="#" data-oc="${esc(c.id)}">${esc(c.name)}</a><div class="ser">${esc(c.contact||"")}</div></td>
   <td>${esc(it.p)}</td><td>${stgTag(it.stage)}</td><td class="hide-m muted" style="max-width:220px">${esc(it.note||"")}</td>
-  <td style="white-space:nowrap"><button class="btn sm" data-done="${k}">完成</button> <button class="btn sec sm" data-snz="${k}">延後 7 天</button> <button class="btn sec sm" data-calf="${c.id}|${it.id}">📅</button></td></tr>`).join("")}
+  <td style="white-space:nowrap"><button class="btn sm" data-done="${k}">完成</button> <button class="btn sec sm" data-snz="${k}">延後 7 天</button> <button class="btn sec sm" data-calf="${esc(c.id)}|${esc(it.id)}">📅</button></td></tr>`).join("")}
   </tbody></table><div class="note">列出 7 天內與逾期的跟進。「完成」會記一筆跟進紀錄並請你決定下次日期。</div>`
   :`<div class="empty" style="padding:18px">7 天內沒有待跟進的事項 🎉</div>`);
   document.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{const {c,it}=rl[+b.dataset.rs];const cc=structuredClone(c);const i=cc.items.find(x=>x.id===it.id);i.extra=(+i.extra||0)+7;store.save(cc);toast("已延後 7 天提醒")});
@@ -333,7 +409,7 @@ function vTodo(){
   document.querySelectorAll("[data-tac]").forEach(b=>b.onclick=()=>{const {c,a}=ap[+b.dataset.tac];calDialog(apptEv(c,a))});
   document.querySelectorAll("[data-tae]").forEach(b=>b.onclick=()=>{const {c,a}=ap[+b.dataset.tae];apptDialog(c,a,apptPersistStored(c.id))});
   $("#newAp").onclick=()=>{const cs=Object.values(customers).sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant"));if(!cs.length)return toast("請先新增客戶");
-    const d=$("#dlg");$("#dbody").innerHTML=`<h3 style="margin-top:0">📍 新增行程</h3><div class="fld"><label>選擇客戶</label><select id="pk">${cs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></div>
+    const d=$("#dlg");$("#dbody").innerHTML=`<h3 style="margin-top:0">📍 新增行程</h3><div class="fld"><label>選擇客戶</label><select id="pk">${cs.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select></div>
     <div class="calrow"><button class="btn" id="pk_ok">下一步</button><button class="btn sec" id="pk_x">取消</button></div>`;d.showModal();
     $("#pk_x").onclick=()=>d.close();$("#pk_ok").onclick=()=>{const c=customers[$("#pk").value];apptDialog(c,null,apptPersistStored(c.id))}};
   document.querySelectorAll("[data-oc]").forEach(a=>a.onclick=e=>{e.preventDefault();openCustomer(a.dataset.oc)});
@@ -431,7 +507,7 @@ function apptDialog(c,a,persist){
 function upcomingAppts(days){const lim=addDays(today(),days),out=[];Object.values(customers).forEach(c=>(c.appts||[]).forEach(a=>{if(!a.done&&a.date>=today()&&a.date<=lim)out.push({c,a})}));
   return out.sort((x,y)=>(x.a.date+x.a.time).localeCompare(y.a.date+y.a.time))}
 const wk=s=>"日一二三四五六"[new Date(s+"T00:00:00").getDay()];
-function apptWhen(a){const dd=dayDiff(a.date);return `${a.date.slice(5)}（${wk(a.date)}）${a.time}${dd===0?' <span class="td">今天</span>':dd===1?' <span class="td">明天</span>':""}`}
+function apptWhen(a){const dd=dayDiff(a.date);return `${esc(a.date.slice(5))}（${wk(a.date)}）${esc(a.time)}${dd===0?' <span class="td">今天</span>':dd===1?' <span class="td">明天</span>':""}`}
 function apptPersistStored(cid){return (a,isNew)=>{const cc=structuredClone(customers[cid]);cc.appts=cc.appts||[];
   const i=cc.appts.findIndex(x=>x.id===a.id);if(i>=0)cc.appts[i]=a;else cc.appts.push(a);
   if(isNew){cc.log=cc.log||[];cc.log.unshift({d:today(),t:`【行程】${a.date} ${a.time} ${a.purpose||"拜訪"}${a.place?"＠"+a.place:""}`});cc.log=cc.log.slice(0,200)}
@@ -443,7 +519,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-calf],[dat
   const it=(c.items||[]).find(x=>x.id===iid);if(!it)return;
   calDialog(b.dataset.calf?followEv(c,it):rebuyEv(c,it))});
 const calBtns=(c,it)=>{const f=it.next&&ACTIVE.includes(+it.stage),r=runOut(it)&&+it.stage!==5;
-  return f||r?`<div class="calrow">${f?`<button class="btn sec sm" data-calf="${c.id}|${it.id}">📅 跟進加入行事曆</button>`:""}${r?`<button class="btn sec sm" data-calr="${c.id}|${it.id}">📅 回購提醒加入行事曆</button>`:""}</div>`:""};
+  return f||r?`<div class="calrow">${f?`<button class="btn sec sm" data-calf="${esc(c.id)}|${esc(it.id)}">📅 跟進加入行事曆</button>`:""}${r?`<button class="btn sec sm" data-calr="${esc(c.id)}|${esc(it.id)}">📅 回購提醒加入行事曆</button>`:""}</div>`:""};
 
 function rebuyDialog({c,it}){
   const d=$("#dlg");
@@ -481,7 +557,7 @@ function vAna(){
   if(!cs.length){$("#main").innerHTML=kpis()+`<div class="empty">還沒有客戶資料。新增幾位客戶和產品需求後，這裡會自動分析。</div>`;return}
   const items=allItems();const live=items.filter(x=>+x.it.stage!==5);
   const hasOrder=c=>(c.items||[]).some(i=>ordersOf(i).length);
-  const lk=c=>`<a href="#" data-oc="${c.id}">${esc(c.name)}</a>`;
+  const lk=c=>`<a href="#" data-oc="${esc(c.id)}">${esc(c.name)}</a>`;
   const pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
   // A. needs by series
   const ser=Object.keys(SUB).filter(k=>k!=="U01").map(k=>{
@@ -559,13 +635,13 @@ function openProduct(name,refresh){
   $("#pbody").innerHTML=`<div class="muted" style="font-size:13px">${TOP[p[1][0]]}・${SUB[p[1]]}｜${esc(p[2])}｜$${p[3].toLocaleString()}｜${p[4]} SV</div>
   <div style="font-size:13px;margin-top:6px">主要成分：${esc(p[5])}</div>
   <h3>需要這項產品的客戶（${rows.length}）</h3>
-  ${rows.length?rows.map(({c,it})=>`<div class="it"><div class="h"><b><a href="#" data-oc="${c.id}">${esc(c.name)}</a> <span class="muted" style="font-weight:400;font-size:12px">${esc(c.contact||"")}</span></b><span>${dueLabel(it.next)}</span></div>
-    <div class="g"><select data-k="stage" data-c="${c.id}" data-i="${it.id}">${STG.map((s,i)=>`<option value="${i}" ${+it.stage===i?"selected":""}>${s}</option>`).join("")}</select>
-    <input type="date" data-k="next" data-c="${c.id}" data-i="${it.id}" value="${it.next||""}" title="下次跟進日"></div>
-    <input type="text" data-k="note" data-c="${c.id}" data-i="${it.id}" value="${esc(it.note||"")}" placeholder="備註（例：每月一盒、在意口味）" style="margin-top:6px">
-    ${rpFields(it,k=>`data-k="${k}" data-c="${c.id}" data-i="${it.id}"`)}${calBtns(c,it)}</div>`).join(""):`<div class="muted">還沒有客戶。</div>`}
+  ${rows.length?rows.map(({c,it})=>`<div class="it"><div class="h"><b><a href="#" data-oc="${esc(c.id)}">${esc(c.name)}</a> <span class="muted" style="font-weight:400;font-size:12px">${esc(c.contact||"")}</span></b><span>${dueLabel(it.next)}</span></div>
+    <div class="g"><select data-k="stage" data-c="${esc(c.id)}" data-i="${esc(it.id)}">${STG.map((s,i)=>`<option value="${i}" ${+it.stage===i?"selected":""}>${s}</option>`).join("")}</select>
+    <input type="date" data-k="next" data-c="${esc(c.id)}" data-i="${esc(it.id)}" value="${esc(it.next||"")}" title="下次跟進日"></div>
+    <input type="text" data-k="note" data-c="${esc(c.id)}" data-i="${esc(it.id)}" value="${esc(it.note||"")}" placeholder="備註（例：每月一盒、在意口味）" style="margin-top:6px">
+    ${rpFields(it,k=>`data-k="${k}" data-c="${esc(c.id)}" data-i="${esc(it.id)}"`)}${calBtns(c,it)}</div>`).join(""):`<div class="muted">還沒有客戶。</div>`}
   <h3>加入需求客戶</h3>
-  <div style="display:flex;gap:8px;flex-wrap:wrap"><select id="pickC" style="flex:1;min-width:160px"><option value="">選擇既有客戶…</option>${Object.values(customers).filter(c=>!(c.items||[]).some(i=>i.p===name)).sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant")).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><select id="pickC" style="flex:1;min-width:160px"><option value="">選擇既有客戶…</option>${Object.values(customers).filter(c=>!(c.items||[]).some(i=>i.p===name)).sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant")).map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("")}</select>
   <button class="btn" id="addToC">加入</button><button class="btn sec" id="newC">＋ 新客戶</button></div>`;
   $("#pfoot").innerHTML="";
   bindItemInputs();
@@ -603,7 +679,7 @@ function openCustomer(id,withProduct){
     <h3>產品需求（${c.items.length}）${custSV(c)?`<span class="svs" style="font-weight:400;margin-left:8px">累計 ${fmtSV(custSV(c))} SV・每月預估 ${fmtSV(custEst(c))} SV</span>`:""}</h3>
     ${c.items.map((it,k)=>{const p=PBN[it.p];return `<div class="it"><div class="h"><b>${esc(it.p)}</b><span>${p?`<span class="muted" style="font-size:12px">$${p[3].toLocaleString()}・${p[4]} SV</span>`:""} <button class="btn del sm" data-rm="${k}">移除</button></span></div>
       <div class="g"><select data-ik="stage" data-k2="${k}">${STG.map((s,i)=>`<option value="${i}" ${+it.stage===i?"selected":""}>${s}</option>`).join("")}</select>
-      <input type="date" data-ik="next" data-k2="${k}" value="${it.next||""}" title="下次跟進日"></div>
+      <input type="date" data-ik="next" data-k2="${k}" value="${esc(it.next||"")}" title="下次跟進日"></div>
       <input type="text" data-ik="note" data-k2="${k}" value="${esc(it.note||"")}" placeholder="備註" style="margin-top:6px">
       ${rpFields(it,f=>`data-ik="${f}" data-k2="${k}"`)}${calBtns(c,it)}</div>`}).join("")||'<div class="muted" style="margin-bottom:8px">尚未加入產品。</div>'}
     <div style="display:flex;gap:8px"><input list="plist" id="addP" placeholder="輸入產品名稱加入…" style="flex:1"><datalist id="plist">${P.filter(p=>!linked.has(p[0])).map(p=>`<option value="${esc(p[0])}">`).join("")}</datalist><button class="btn sec" id="addPB">加入</button></div>
@@ -614,7 +690,7 @@ function openCustomer(id,withProduct){
       const row=(a,p)=>`<div class="it ap ${p?"past":""}"><div class="h"><b>${apptWhen(a)}</b><span class="muted" style="font-size:12px">${DURS.find(x=>x[0]==a.dur)?.[1]||""}${a.done?"・已完成":""}</span></div>
         <div>${esc(a.purpose||"拜訪")}${a.place?` <span class="pl">・📍 <a href="${mapURL(a.place)}" target="_blank" rel="noopener">${esc(a.place)}</a></span>`:""}</div>
         ${a.note?`<div class="muted" style="font-size:13px">${esc(a.note)}</div>`:""}
-        <div class="calrow">${p?"":`<button class="btn sec sm" data-apc="${a.id}">📅 加入行事曆</button>`}<button class="btn sec sm" data-ape="${a.id}">編輯</button><button class="btn del sm" data-apx="${a.id}">刪除</button></div></div>`;
+        <div class="calrow">${p?"":`<button class="btn sec sm" data-apc="${esc(a.id)}">📅 加入行事曆</button>`}<button class="btn sec sm" data-ape="${esc(a.id)}">編輯</button><button class="btn del sm" data-apx="${esc(a.id)}">刪除</button></div></div>`;
       return (up.map(a=>row(a,false)).join("")||'<div class="muted" style="margin-bottom:8px">沒有排定的行程。</div>')+(past.length?`<div class="muted" style="font-size:12px;margin:6px 0">過去的行程</div>`+past.map(a=>row(a,true)).join(""):"")})()}
     <h3>跟進紀錄</h3>
     <div style="display:flex;gap:8px;margin-bottom:10px"><input type="text" id="logT" placeholder="新增一筆紀錄（例：電話聊過，下週送試用包）" style="flex:1"><button class="btn sec" id="logB">記錄</button></div>
@@ -660,8 +736,77 @@ async function shareOrDownload(name,text,type){
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
 }
 const stamp=()=>today().replace(/-/g,"");
-function backup(){shareOrDownload(`需求追蹤備份_${stamp()}.json`,JSON.stringify({app:"uvaco-tracker",version:1,exported:new Date().toISOString(),customers},null,1),"application/json");
-  try{localStorage.setItem(KEY+"_backup",new Date().toISOString())}catch(e){};setTimeout(render,500)}
+/* ----- 解鎖 ----- */
+$("#lkf").addEventListener("submit",async e=>{e.preventDefault();
+  if(!hasCrypto())return;
+  const f=failState();if(Date.now()<f.until){$("#lke").textContent=`嘗試太多次，請 ${Math.ceil((f.until-Date.now())/1000)} 秒後再試`;return}
+  const pass=$("#lkp").value;if(!pass)return;
+  $("#lkb").disabled=true;$("#lkb").textContent="解鎖中…";
+  try{const pkg=JSON.parse(localStorage.getItem(LK));const r=await openJSON(pkg,pass);
+    lockKey=r.key;lockSalt=r.salt;lockIter=r.iter;customers=sanitizeAll(r.data);
+    try{localStorage.removeItem(KEY+"_fail")}catch(e){}
+    $("#lock").classList.remove("on");$("#lockNow").hidden=false;setSync("🔒 資料已加密・"+(lockAfter()?`離開 ${lockAfter()} 分鐘後自動上鎖`:"離開即上鎖"));render();
+    if(lockIter<ITER){lockSalt=crypto.getRandomValues(new Uint8Array(16));lockKey=await deriveKey(pass,lockSalt,ITER);lockIter=ITER;store._write()}
+  }catch(err){const n=f.n+1;const wait=n>=5?Math.min(900,30*2**(n-5)):0;
+    try{localStorage.setItem(KEY+"_fail",JSON.stringify({n,until:Date.now()+wait*1000}))}catch(e){}
+    $("#lke").textContent=wait?`密碼錯誤 ${n} 次，請 ${wait} 秒後再試`:"密碼錯誤";$("#lkp").value=""}
+  $("#lkb").disabled=false;$("#lkb").textContent="解鎖"});
+$("#lkfg").onclick=()=>{const d=$("#dlg");
+  $("#dbody").innerHTML=`<h3 style="margin-top:0">忘記密碼</h3><p>資料是用你的密碼加密的，<b>沒有密碼就無法解開，也沒有任何人能幫你找回</b>。</p>
+  <p class="muted" style="font-size:13px;line-height:1.6">如果你有備份檔，可以清除這支手機上的加密資料，重新開始後到「設定 → 從備份檔還原」。清除後無法復原。</p>
+  <div class="calrow"><button class="btn sec" id="fg_x">取消</button><button class="btn del" id="fg_w">清除並重新開始</button></div>`;
+  d.showModal();$("#fg_x").onclick=()=>d.close();
+  $("#fg_w").onclick=()=>{$("#dbody").innerHTML=`<p>最後確認：清除這支手機上<b>所有加密的客戶資料</b>？</p><p class="muted" style="font-size:13px">請輸入「清除」兩字確認。</p><input type="text" id="fg_t" style="width:100%"><div class="calrow" style="margin-top:10px"><button class="btn sec" id="fg_x2">取消</button><button class="btn del" id="fg_y">確定清除</button></div>`;
+    $("#fg_x2").onclick=()=>d.close();
+    $("#fg_y").onclick=()=>{if($("#fg_t").value.trim()!=="清除")return toast("請輸入「清除」");
+      [LK,KEY,KEY+"_fail",KEY+"_lockafter"].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
+      lockKey=null;customers={};d.close();$("#lock").classList.remove("on");$("#lockNow").hidden=true;setSync("📱 資料只存在這支手機・請定期備份",true);render();toast("已清除，可從備份檔還原")}}};
+$("#lockNow").onclick=lockNow;
+document.addEventListener("visibilitychange",()=>{if(!isLockOn()||!lockKey)return;
+  if(document.hidden){hiddenAt=Date.now();if(lockAfter()===0)lockNow()}
+  else if(hiddenAt&&Date.now()-hiddenAt>=lockAfter()*60000)lockNow()});
+function pwFields(lbl){return `<div class="pw"><input type="password" id="pw1" placeholder="${lbl}（至少 6 個字元）" autocomplete="new-password"><input type="password" id="pw2" placeholder="再輸入一次" autocomplete="new-password"></div>`}
+function readPw(){const a=$("#pw1").value,b=$("#pw2").value;if(a.length<6){toast("密碼至少 6 個字元");return null}if(a!==b){toast("兩次輸入的密碼不一樣");return null}return a}
+function lockSetupDialog(){if(!hasCrypto())return toast("請用 https 網址開啟 App 才能使用加密");
+  const d=$("#dlg");$("#dbody").innerHTML=`<h3 style="margin-top:0">🔒 設定 App 鎖</h3>
+  <p style="font-size:13.5px;line-height:1.6">開啟後，手機裡的客戶資料會用這組密碼加密，每次開 App 都要輸入。</p>
+  <p style="font-size:13px;line-height:1.6;color:var(--bad)"><b>忘記密碼就無法找回資料。</b>請先「匯出備份檔」，並把密碼記在安全的地方。</p>${pwFields("設定密碼")}
+  <div class="calrow"><button class="btn sec" id="ls_x">取消</button><button class="btn" id="ls_ok">開啟 App 鎖</button></div>`;
+  d.showModal();$("#ls_x").onclick=()=>d.close();
+  $("#ls_ok").onclick=async()=>{const p=readPw();if(!p)return;$("#ls_ok").disabled=true;$("#ls_ok").textContent="加密中…";
+    lockSalt=crypto.getRandomValues(new Uint8Array(16));lockIter=ITER;lockKey=await deriveKey(p,lockSalt,ITER);
+    const pkg=await sealJSON(customers,lockKey,lockSalt,ITER);try{localStorage.setItem(LK,JSON.stringify(pkg));localStorage.removeItem(KEY)}catch(e){}
+    d.close();$("#lockNow").hidden=false;setSync("🔒 資料已加密",false);render();toast("已開啟 App 鎖")}}
+function verifyDialog(title,btn,onOk){const d=$("#dlg");$("#dbody").innerHTML=`<h3 style="margin-top:0">${title}</h3><div class="pw"><input type="password" id="pw0" placeholder="目前的密碼" autocomplete="current-password"></div><div id="vx"></div>
+  <div class="calrow"><button class="btn sec" id="vd_x">取消</button><button class="btn" id="vd_ok">${btn}</button></div>`;
+  d.showModal();$("#vd_x").onclick=()=>d.close();
+  $("#vd_ok").onclick=async()=>{try{await openJSON(JSON.parse(localStorage.getItem(LK)),$("#pw0").value);onOk(d)}catch(e){toast("目前的密碼不正確")}}}
+function changePassDialog(){verifyDialog("變更 App 鎖密碼","下一步",d=>{$("#dbody").innerHTML=`<h3 style="margin-top:0">設定新密碼</h3>${pwFields("新密碼")}<div class="calrow"><button class="btn sec" id="cp_x">取消</button><button class="btn" id="cp_ok">儲存新密碼</button></div>`;
+  $("#cp_x").onclick=()=>d.close();$("#cp_ok").onclick=async()=>{const p=readPw();if(!p)return;lockSalt=crypto.getRandomValues(new Uint8Array(16));lockIter=ITER;lockKey=await deriveKey(p,lockSalt,ITER);await store._write();d.close();toast("已變更密碼")}})}
+function disableLockDialog(){verifyDialog("關閉 App 鎖","關閉並解除加密",async d=>{lockKey=null;try{localStorage.removeItem(LK)}catch(e){}await store._write();$("#lockNow").hidden=true;setSync("📱 資料只存在這支手機・請定期備份",true);d.close();render();toast("已關閉 App 鎖")})}
+
+/* ----- 備份（可加密） ----- */
+function backup(){const d=$("#dlg");
+  $("#dbody").innerHTML=`<h3 style="margin-top:0">💾 匯出備份檔</h3><p style="font-size:13.5px;line-height:1.6">建議設定備份密碼：備份檔外流時，沒有密碼的人打不開。還原時需要輸入這組密碼。</p>
+  ${hasCrypto()?pwFields("備份密碼"):'<p class="muted">此瀏覽器不支援加密（需用 https 開啟）。</p>'}
+  <div class="calrow">${hasCrypto()?'<button class="btn" id="bk_e">加密匯出（建議）</button>':""}<button class="btn sec" id="bk_p">不加密匯出</button><button class="btn sec" id="bk_x">取消</button></div>`;
+  d.showModal();$("#bk_x").onclick=()=>d.close();
+  const done=()=>{try{localStorage.setItem(KEY+"_backup",new Date().toISOString())}catch(e){};d.close();setTimeout(render,500)};
+  if(hasCrypto())$("#bk_e").onclick=async()=>{const p=readPw();if(!p)return;$("#bk_e").disabled=true;$("#bk_e").textContent="加密中…";
+    const salt=crypto.getRandomValues(new Uint8Array(16));const key=await deriveKey(p,salt,ITER);
+    const pkg=await sealJSON({customers},key,salt,ITER);
+    await shareOrDownload(`需求追蹤備份_${stamp()}_加密.json`,JSON.stringify({app:"uvaco-tracker",version:2,enc:true,exported:new Date().toISOString(),...pkg}),"application/json");done()};
+  $("#bk_p").onclick=async()=>{await shareOrDownload(`需求追蹤備份_${stamp()}.json`,JSON.stringify({app:"uvaco-tracker",version:1,exported:new Date().toISOString(),customers},null,1),"application/json");done()};
+}
+function restoreDialog(data){
+  const valid=Object.values(sanitizeAll(data));if(!valid.length)return toast("備份檔裡沒有有效的客戶資料");
+  const d=$("#dlg");$("#dbody").innerHTML=`<p>備份檔有 ${valid.length} 位客戶。要怎麼還原？</p>
+    <p class="muted" style="font-size:13px">「合併」會保留手機上現有資料，同一位客戶以備份檔為準；「取代」會先清空手機上的資料。</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn sec" id="dc">取消</button><button class="btn sec" id="dm">合併</button><button class="btn del" id="dr">取代</button></div>`;
+  if(!d.open)d.showModal();$("#dc").onclick=()=>d.close();
+  const apply=rep=>{if(rep)customers={};valid.forEach(c=>customers[c.id]=c);store._write();d.close();render();toast(`已還原 ${valid.length} 位客戶`)};
+  $("#dm").onclick=()=>apply(false);$("#dr").onclick=()=>apply(true);
+}
 function vSet(){
   const n=Object.keys(customers).length;let last="",bk="";
   try{last=localStorage.getItem(KEY+"_saved")||"";bk=localStorage.getItem(KEY+"_backup")||""}catch(e){}
@@ -671,7 +816,11 @@ function vSet(){
     <p>資料只存在這支手機的這個 App 裡。換手機、清除瀏覽器資料或刪掉 App 都會讓資料消失，請定期備份，把備份檔存到雲端硬碟或傳給自己。</p>
     <p>目前 ${n} 位客戶・上次備份：${bk?`${bk.slice(0,10)}（${bkDays} 天前）`:"<b style='color:var(--bad)'>從未備份</b>"}</p>
     <div class="row"><button class="btn" id="bk">匯出備份檔</button><button class="btn sec" id="rs">從備份檔還原</button><input type="file" id="rf" accept=".json,application/json" hidden></div></div>
-  <div class="box"><h5>📄 匯出表格</h5><p>匯出 CSV，可用 Excel、Google 試算表或 Numbers 開啟。</p>
+  <div class="box"><h5>🔒 App 鎖</h5>${isLockOn()?`<p>已開啟：客戶資料以你的密碼加密（AES-256）。</p>
+    <div class="fld"><label>離開 App 多久後自動上鎖</label><select id="la">${[[0,"立即"],[1,"1 分鐘"],[5,"5 分鐘"],[15,"15 分鐘"]].map(([v,t])=>`<option value="${v}" ${lockAfter()===v?"selected":""}>${t}</option>`).join("")}</select></div>
+    <div class="row"><button class="btn sec" id="lk_now">立即鎖定</button><button class="btn sec" id="lk_cp">變更密碼</button><button class="btn del" id="lk_off">關閉 App 鎖</button></div>`
+    :`<p>開啟後每次打開 App 都要輸入密碼，手機裡的客戶資料也會加密保存。忘記密碼無法找回，請先匯出備份。</p><button class="btn" id="lk_on">設定 App 鎖</button>`}</div>
+  <div class="box"><h5>📄 匯出表格</h5><p>匯出 CSV，可用 Excel、Google 試算表或 Numbers 開啟。<b>CSV 不會加密</b>，請小心保管。</p>
     <div class="row"><button class="btn sec" id="csvD">下載 CSV</button><button class="btn sec" id="csvC">複製 CSV</button></div></div>
   <div class="box"><h5>📲 安裝到主畫面</h5><p>iPhone：用 Safari 開啟 → 分享 → 加入主畫面。<br>Android：用 Chrome 開啟 → 右上選單 → 安裝應用程式／加到主畫面。<br>安裝後可離線使用。</p></div>
   <div class="box"><h5>⚠️ 清除資料</h5><p>刪除這支手機上的所有客戶資料，無法復原。清除前請先匯出備份。</p>
@@ -679,20 +828,20 @@ function vSet(){
   <div class="note">產品資料：葡眾官網 uvaco.com.tw，2026/11/18 擷取，售價與 SV 以官網公告為準。非官方工具。${last?`<br>最後存檔：${last.replace("T"," ").slice(0,16)}`:""}</div>
   </div>`;
   $("#bk").onclick=backup;
+  if(isLockOn()){$("#la").onchange=e=>{try{localStorage.setItem(KEY+"_lockafter",e.target.value)}catch(x){}toast("已更新");setSync("🔒 資料已加密・"+(lockAfter()?`離開 ${lockAfter()} 分鐘後自動上鎖`:"離開即上鎖"))};
+    $("#lk_now").onclick=lockNow;$("#lk_cp").onclick=changePassDialog;$("#lk_off").onclick=disableLockDialog}
+  else $("#lk_on").onclick=lockSetupDialog;
   $("#rs").onclick=()=>$("#rf").click();
-  $("#rf").onchange=async e=>{const f=e.target.files[0];if(!f)return;
-    try{const j=JSON.parse(await f.text());const data=j.customers||j;
-      if(typeof data!=="object"||Array.isArray(data))throw 0;
-      const valid=Object.values(data).filter(c=>c&&c.kind==="customer"&&c.id&&typeof c.name==="string");
-      if(!valid.length)throw 0;
-      const d=$("#dlg");$("#dbody").innerHTML=`<p>備份檔有 ${valid.length} 位客戶。要怎麼還原？</p>
-        <p class="muted" style="font-size:13px">「合併」會保留手機上現有資料，同一位客戶以備份檔為準；「取代」會先清空手機上的資料。</p>
-        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn sec" id="dc">取消</button><button class="btn sec" id="dm">合併</button><button class="btn del" id="dr">取代</button></div>`;
-      d.showModal();$("#dc").onclick=()=>d.close();
-      const apply=rep=>{if(rep)customers={};valid.forEach(c=>customers[c.id]=c);store._write();d.close();render();toast(`已還原 ${valid.length} 位客戶`)};
-      $("#dm").onclick=()=>apply(false);$("#dr").onclick=()=>apply(true);
-    }catch(err){toast("這不是有效的備份檔")}
-    e.target.value=""};
+  $("#rf").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+    let j;try{if(f.size>5*1024*1024)throw 0;j=JSON.parse(await f.text());if(!j||typeof j!=="object")throw 0}catch(err){return toast("這不是有效的備份檔")}
+    if(j.enc){if(!hasCrypto())return toast("請用 https 網址開啟 App 才能還原加密備份");
+      const d=$("#dlg");$("#dbody").innerHTML=`<h3 style="margin-top:0">🔐 加密的備份檔</h3><p style="font-size:13.5px">請輸入匯出時設定的備份密碼。</p><div class="pw"><input type="password" id="rp" placeholder="備份密碼"></div>
+        <div class="calrow"><button class="btn sec" id="rp_x">取消</button><button class="btn" id="rp_ok">解開</button></div>`;
+      d.showModal();$("#rp_x").onclick=()=>d.close();
+      $("#rp_ok").onclick=async()=>{$("#rp_ok").disabled=true;$("#rp_ok").textContent="解密中…";
+        try{const r=await openJSON(j,$("#rp").value);restoreDialog(r.data.customers||r.data)}catch(err){toast("備份密碼不正確");$("#rp_ok").disabled=false;$("#rp_ok").textContent="解開"}};
+      return}
+    const data=j.customers||j;if(typeof data!=="object"||Array.isArray(data))return toast("這不是有效的備份檔");restoreDialog(data)};
   $("#csvD").onclick=()=>shareOrDownload(`需求追蹤_${stamp()}.csv`,csvText(),"text/csv");
   $("#csvC").onclick=copyCSV;
   $("#wipe").onclick=()=>{const d=$("#dlg");$("#dbody").innerHTML=`<p>確定清除這支手機上全部 ${n} 位客戶的資料？此動作無法復原。</p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn sec" id="dc">取消</button><button class="btn del" id="dy">清除</button></div>`;

@@ -1,5 +1,5 @@
 // 離線快取：App 檔案存在手機上，沒有網路也能開啟。更新 App 時把 VERSION 加 1。
-const VERSION = "v2";
+const VERSION = "v4";
 const CACHE = "uvaco-tracker-" + VERSION;
 const FILES = ["./", "./index.html", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png"];
