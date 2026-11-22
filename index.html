@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#5b2d8e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="需求追蹤">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>葡眾客戶需求追蹤</title>
+<style>
+:root{--g:#5b2d8e;--g2:#8a5cc2;--g3:#efe7f8;--ink:#24182f;--mu:#6f6479;--line:#e7e0ea;--bg:#faf7f2;--ok:#3d8b2f;--warn:#c47a00;--bad:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;-webkit-tap-highlight-color:transparent;background:var(--bg);color:var(--ink);font-size:14px}
+button,input,select,textarea{font:inherit}
+.top{position:sticky;top:0;z-index:5;background:#fff;border-bottom:1px solid var(--line)}
+.top .in{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.top h1{font-size:17px;margin:0;font-weight:900;color:var(--g)}
+.tabs{display:flex;gap:4px}
+.tab{border:0;background:none;padding:7px 12px;border-radius:8px;cursor:pointer;color:var(--mu);font-weight:500}
+.tab.act{background:var(--g3);color:var(--g)}
+.tab .bd{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;line-height:18px}
+.sync{margin-left:auto;font-size:12px;color:var(--mu)}
+.wrap{max-width:1100px;margin:0 auto;padding:16px}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi .k{font-size:12px;color:var(--mu)}.kpi .v{font-size:22px;font-weight:900;color:var(--g)}
+.kpi.bad .v{color:var(--bad)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 11px;cursor:pointer;font-size:13px}
+.chip.act{background:var(--g);color:#fff;border-color:var(--g)}
+input[type=search],input[type=text],input[type=date],input[type=number],select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff}
+input[type=search]{flex:1;min-width:180px}
+.btn{border:0;background:var(--g);color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:500}
+.btn.sec{background:#fff;color:var(--g);border:1px solid var(--g2)}
+.btn.sm{padding:4px 10px;font-size:12px}
+.btn.del{background:#fff;color:var(--bad);border:1px solid #e8b4ad}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th{background:#f4eff8;text-align:left;font-size:12px;color:var(--mu);font-weight:500;padding:8px 10px}
+td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:middle}
+tr.click{cursor:pointer}tr.click:hover td{background:#fbf8fe}
+.ser{font-size:11px;color:var(--mu)}
+.r{text-align:right}
+.stg{display:inline-block;font-size:11px;border-radius:99px;padding:2px 8px;margin:1px 2px 1px 0;white-space:nowrap}
+.s0{background:#fff4d6;color:#8a6100}.s1{background:#e3eefc;color:#2a5a9c}.s2{background:#efe7f8;color:#5b2d8e}
+.s3{background:#e2f2dc;color:#2f6d22}.s4{background:#d3ecc9;color:#1f5a14}.s5{background:#eee;color:#777}
+.muted{color:var(--mu)}
+.empty{padding:36px;text-align:center;color:var(--mu);background:#fff;border:1px dashed var(--line);border-radius:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.cc{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer}
+.cc:hover{border-color:var(--g2)}
+.cc .nm{font-weight:700;font-size:15px}.cc .ct{font-size:12px;color:var(--mu);margin:2px 0 6px}
+.tag{display:inline-block;font-size:11px;background:var(--g3);color:var(--g);border-radius:4px;padding:1px 6px;margin:0 3px 3px 0}
+.due{font-size:12px;margin-top:6px}
+.od{color:var(--bad);font-weight:700}.td{color:var(--warn);font-weight:700}
+/* drawer / modal */
+.ov{position:fixed;inset:0;background:rgba(30,15,45,.35);z-index:20;display:none}
+.ov.on{display:block}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(640px,100%);background:#fff;z-index:21;box-shadow:-8px 0 30px rgba(0,0,0,.12);
+  transform:translateX(100%);transition:transform .25s;display:flex;flex-direction:column}
+.panel.on{transform:none}
+.ph{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.ph h2{font-size:17px;margin:0;flex:1}
+.x{border:0;background:none;font-size:22px;cursor:pointer;color:var(--mu)}
+.pb{padding:16px 18px;overflow:auto;flex:1}
+.pf{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px}
+.fld{margin-bottom:12px}.fld label{display:block;font-size:12px;color:var(--mu);margin-bottom:4px}
+.fld input,.fld textarea,.fld select{width:100%}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+h3{font-size:14px;margin:18px 0 8px;color:var(--g)}
+.it{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px}
+.it .h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px}
+.it .h b{font-size:14px}
+.it .g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.it input,.it select{width:100%;padding:5px 8px;font-size:13px}
+.sugg{display:flex;flex-wrap:wrap;gap:5px}
+.sugg button{border:1px dashed var(--g2);background:#fff;color:var(--g);border-radius:99px;padding:3px 9px;font-size:12px;cursor:pointer}
+.log{font-size:13px;border-left:3px solid var(--g3);padding:3px 0 3px 10px;margin-bottom:6px}
+.log .d{font-size:11px;color:var(--mu)}
+.rp{display:grid;grid-template-columns:1fr .6fr .8fr;gap:8px;margin-top:6px;background:#f6fbf3;border:1px solid #d7ebcc;border-radius:8px;padding:8px}
+.rp label{font-size:11px;color:var(--mu);display:block;margin-bottom:2px}
+.rp .out{grid-column:1/-1;font-size:12.5px}
+.svb{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:-4px 0 14px}
+.svb>div{background:#f6fbf3;border:1px solid #d7ebcc;border-radius:10px;padding:8px 12px}
+.svb .k{font-size:12px;color:var(--mu)}.svb .v{font-size:18px;font-weight:900;color:#2f6d22}
+.svs{font-size:12px;color:#2f6d22}
+@media(max-width:640px){.svb{grid-template-columns:repeat(2,1fr)}}
+.ana{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.box.full{grid-column:1/-1}
+.box h5{font-size:14px;margin:0 0 4px}.box .ds{font-size:12px;color:var(--mu);margin-bottom:10px}
+.hb{display:grid;grid-template-columns:6.5em 1fr 4.5em;gap:8px;align-items:center;margin:5px 0;font-size:13px}
+.hb .tr{height:14px;background:#f2eef5;border-radius:4px;display:flex;overflow:hidden}
+.hb .tr i{display:block;height:100%}
+.c1{background:#2f6d22}.c2{background:#8a5cc2}.c3{background:#d9c9ee}
+.lg{font-size:11.5px;color:var(--mu);display:flex;gap:12px;margin-top:6px}.lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.seg>div{border-radius:10px;padding:10px;border:1px solid var(--line)}
+.seg .v{font-size:20px;font-weight:900}.seg .nms{font-size:12px;margin-top:4px;line-height:1.7}
+.seg a,.opp a{color:var(--g)}
+.opp{font-size:13px;line-height:1.6;margin:0;padding-left:18px}.opp li{margin-bottom:6px}
+.mini{width:100%;border:0}.mini td,.mini th{padding:5px 6px;font-size:12.5px}
+@media(max-width:760px){.ana{grid-template-columns:1fr}.seg{grid-template-columns:repeat(2,1fr)}}
+h4{font-size:13px;margin:22px 0 8px;color:var(--g)}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#24182f;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;z-index:40;pointer-events:none}
+.toast.on{opacity:1}
+.note{font-size:12px;color:var(--mu);margin-top:18px}
+.funnel{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.fn{flex:1;min-width:110px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.fn .v{font-size:18px;font-weight:900}
+dialog{border:0;border-radius:12px;padding:0;width:min(420px,92vw)}
+dialog .pb{padding:16px}
+.top .in{padding-top:max(10px,env(safe-area-inset-top))}
+.tab .ic{display:none}
+@media(max-width:760px){
+  body{font-size:15px;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .top .in{padding:max(8px,env(safe-area-inset-top)) 14px 8px;gap:4px}
+  .top h1{font-size:16px;flex:1}
+  .sync{margin-left:0;font-size:11px;width:100%}
+  .tabs{position:fixed;left:0;right:0;bottom:0;z-index:15;background:#fff;border-top:1px solid var(--line);
+    padding:4px 4px calc(4px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);gap:0}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:1px;padding:6px 0;font-size:11px;border-radius:10px;position:relative}
+  .tab .ic{display:block;font-size:20px;line-height:1}
+  .tab .bd{position:absolute;top:2px;left:55%;margin:0}
+  .wrap{padding:12px}
+  .kpis{grid-template-columns:repeat(3,1fr)!important;gap:6px;margin-bottom:8px}
+  .kpi{padding:6px 8px}.kpi .k{font-size:10.5px;line-height:1.3}.kpi .v{font-size:17px}
+  .svb{gap:6px;margin:0 0 10px}.svb>div{padding:6px 8px}.svb .k{font-size:10.5px}.svb .v{font-size:15px}
+  .funnel{flex-wrap:nowrap;overflow-x:auto;margin-bottom:10px;-webkit-overflow-scrolling:touch}
+  .fn{min-width:78px;flex:0 0 auto;padding:6px 8px}.fn .v{font-size:15px}
+  table.stack,table.stack tbody{display:block;border:0;background:none}
+  table.stack thead{display:none}
+  table.stack tr{display:block;background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;padding:8px 10px}
+  table.stack td{display:block;border:0;padding:3px 0}
+  table.stack td.hide-m{display:none}
+  table.stack td:last-child{padding-top:6px}
+  .btn{padding:10px 16px}.btn.sm{padding:7px 12px;font-size:13px}
+  input,select,textarea{font-size:16px !important}
+  .panel{width:100%}
+  .ph{padding-top:max(14px,env(safe-area-inset-top))}
+  .pf{padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  .x{font-size:28px;padding:0 6px}
+}
+.calrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.calrow .btn{font-size:12px;padding:5px 10px}
+.ap{border-left:4px solid var(--g2)}.ap.past{opacity:.55;border-left-color:#ccc}
+.ap .pl a{color:var(--g)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fgrid .full{grid-column:1/-1}
+.fgrid label{font-size:12px;color:var(--mu);display:block;margin-bottom:3px}
+.fgrid input,.fgrid select,.fgrid textarea{width:100%}
+dialog{max-height:90vh;overflow:auto}
+.set{display:grid;gap:12px;max-width:640px}
+.set .box p{font-size:13px;color:var(--mu);margin:4px 0 10px;line-height:1.6}
+.set .row{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}.hide-m{display:none}.row2,.it .g{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="top"><div class="in">
+  <h1>葡眾客戶需求追蹤</h1>
+  <div class="tabs">
+    <button class="tab act" data-v="prod"><span class="ic">📦</span>產品看板</button>
+    <button class="tab" data-v="cust"><span class="ic">👥</span>客戶</button>
+    <button class="tab" data-v="todo"><span class="ic">⏰</span>待辦<span class="bd" id="todoBd" hidden></span></button>
+    <button class="tab" data-v="ana"><span class="ic">📊</span>分析</button>
+    <button class="tab" data-v="set"><span class="ic">⚙️</span>設定</button>
+  </div>
+  <div class="sync" id="sync"></div>
+</div></div>
+
+<div class="wrap" id="main"></div>
+
+<div class="ov" id="ov"></div>
+<div class="panel" id="panel"><div class="ph"><h2 id="pt"></h2><button class="x" id="px">×</button></div><div class="pb" id="pbody"></div><div class="pf" id="pfoot"></div></div>
+<dialog id="dlg"><div class="pb" id="dbody"></div></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+const P = [["995生技營養品","A01","180ml × 24瓶/箱",5980,164,"黃豆發酵液、乳酸菌、香菇及靈芝菌絲體發酵液"],["995生技營養品（甘味）","A01","180ml × 24瓶/箱",5980,164,"同 995 配方，甘味版本"],["葡眾360計劃","A01","30包/盒",11088,320,"單日包：原味餐包×2、康爾喜×3、迪康×1、全身調理膠囊×2"],["康爾喜乳酸菌顆粒","A01","90條/盒",1890,52,"乳酸菌凍乾品、異麥芽寡醣、β-胡蘿蔔素"],["永生福朗膠囊","A01","120粒/瓶",1770,48,"黃豆發酵物、靈芝菌絲體、酵母菌、乳酸菌"],["樟芝益菌絲體生技營養品","A02","180ml × 24瓶/箱",5980,164,"樟芝菌絲體發酵液、舞茸、巴西蘑菇、桑黃、雲芝"],["UVACO樟芝菌絲體滴粒","A02","約45粒 × 2瓶/盒",5500,160,"樟芝菌絲體發酵液粉及萃取物、紅藜麥"],["葡眾樂優乳酸菌顆粒","A02","90條/盒",2100,60,"4 株乳酸菌、白芝麻、杏仁、五味子"],["艾逸膠囊","A02","100粒/瓶",1344,36,"靈芝菌絲體、陳皮、桑椹、黃耆、當歸"],["艾逸膠囊（純素）","A02","90粒/瓶",1344,36,"同艾逸配方，植物性膠囊"],["百克斯膠囊","A02","100粒/瓶",1386,40,"蝙蝠蛾擬青黴菌絲體、黨參、冬蟲夏草菌絲體"],["百克斯膠囊（純素）","A02","90粒/瓶",1386,40,"同百克斯配方，植物性膠囊"],["葡眾寧康福膠囊","A02","120粒/瓶",3150,92,"桑黃、蛹蟲草菌絲體、牛初乳、綠茶"],["康爾喜（N）乳酸菌顆粒","A03","1.5g × 90條/盒",1960,52,"乳酸菌、木瓜及鳳梨酵素、半乳寡糖"],["康爾暢乳酸菌球顆粒","A03","0.8g × 30條/盒",2050,60,"多株 GK 系列乳酸菌（植物、鼠李糖、羅伊氏等）"],["衛傑膠囊","A03","100粒/瓶",1260,36,"LGG 鼠李糖乳酸菌、加氏乳酸菌、山藥、猴頭菇"],["衛傑膠囊（奶素）","A03","90粒/瓶",1260,36,"同衛傑配方，植物性膠囊"],["紓衛菓軟糖","A03","15顆/袋",700,20,"仙人掌橄欖葉萃取、猴頭菇菌絲體"],["康爾動乳酸菌球顆粒","A04","0.8g × 30條/盒",1950,56,"多株乳酸菌、酪酸菌、桑黃菌絲體"],["葡眾活逸康猴頭菇菌絲體顆粒","A04","2g × 90條/盒",5796,172,"猴頭菇菌絲體、丹參、桂圓、薑黃"],["貝力耐膠囊","A04","120粒/瓶",2800,80,"葡萄糖胺、軟骨素、膠原蛋白、鈣"],["葡眾猴頭菇菌絲體膠囊","A04","90粒/瓶",3700,104,"猴頭菇菌絲體粉"],["欣悅康沖泡飲","A05","10g × 30包/盒",3100,88,"糙薏仁、黑糖、紅豆、老薑、乳酸菌"],["醣利佳膠囊","A05","100粒/瓶",2330,64,"桑黃菌絲體、乳酸菌、白腎豆、苦瓜"],["扶百生膠囊","A05","100粒/瓶",2005,56,"馬卡、黃精、杜仲葉、管花肉蓯蓉"],["暢且利膠囊","A05","100粒/瓶",1764,48,"亞麻籽、南瓜籽、蛹蟲草、鋅／硒酵母"],["青采孅膠囊","A05","100粒/瓶",2180,60,"幾丁聚糖、藤黃果、綠茶、乳酸菌"],["葡眾靚妍飲","A05","20ml × 15入/盒",2150,60,"金針菇乳酸菌菁華、蔓越莓、洛神花"],["芯潤飲","A05","20ml × 15入/盒",2150,60,"西印度櫻桃、越桔、乳酸菌發酵液"],["清明亮膠囊","A06","120粒/瓶",3500,100,"熟地、枸杞、山桑子、葉黃素"],["清明亮膠囊（純素）","A06","115粒/瓶",3500,100,"同清明亮配方，植物性膠囊"],["小悅光飲","A06","20ml × 15入/盒",1400,40,"藍莓發酵液、葉黃素、西印度櫻桃"],["康悅兒乳酸菌顆粒","A07","1.5g × 90包/盒",1764,48,"GKJOY、GKF3 乳酸菌"],["康貝寧膠囊","A07","100粒/瓶",1880,52,"蜜環菌菌絲體、L-色胺酸、茯苓、紅棗"],["迪康沖泡飲","A08","12g × 30包/盒",1764,48,"山楂、陳皮、枸杞、丹參、人參"],["力盛沖泡飲","A08","5g × 30包/盒",1764,48,"草決明、黃耆、枸杞、羅漢果、靈芝"],["禾玥膠囊","A08","100粒/瓶",1400,40,"紅棗、山楂、紅葡萄葉、靈芝菌絲體"],["葡眾貝納Q10膠囊","A08","120粒/瓶",3350,96,"紅麴、薑黃、納豆激酶、輔酵素 Q10"],["葡眾原味餐包沖泡飲","A09","14g × 30包/盒",1344,36,"燕麥、豆漿粉、大豆蛋白、蓮子"],["葡眾餐包沖泡飲","A09","15g × 30包/盒",1344,36,"燕麥、大豆蛋白、蓮子、靈芝菌絲體"],["葡眾銀燦餐包沖泡飲","A09","14g × 30包/盒",1480,40,"燕麥、綜合穀粉、黑芝麻"],["桑本力元沖泡飲","A09","14g × 30包/盒",1480,40,"大豆蛋白、黑芝麻、桑黃菌絲體"],["奇芮（愛犬專用益生菌粉）","B01","1.2g × 75條/盒",900,20,"膠原蛋白、多株乳酸菌"],["Hi Kiss+ 平衡洗面乳","C01","130g/支",700,20,"乳酸菌發酵液、透明質酸、仙人掌花"],["YaYa Mini 舒緩膏","C02","7g × 6瓶/盒",1400,40,"尤加利油、丁香油、樟芝、茶樹精油"],["蘆露蘆薈膠（50g × 3支）","C02","50g × 3支/盒",840,24,"蟬花、庫拉索蘆薈、積雪草"],["蘆露蘆薈膠（180g）","C02","180g/支",840,24,"蟬花、庫拉索蘆薈、積雪草"],["葡眾淨膚皂","C02","95g × 3盒/組",870,24,"乳酸菌發酵液、海鹽、香茅油、薑油"],["葡眾蟬花護手霜","C02","30g × 3支/盒",840,24,"蟬花、乳油木果油、洋甘菊"],["沁潔私密潔淨慕斯","C02","150g/瓶",980,28,"乳酸、泛酸醇、乳酸桿菌發酵濾液"],["貝益潔護效牙膏","C03","140g × 3盒/組",700,20,"木糖醇、乳酸菌發酵液、氟化鈉"],["Hi Spray 清新噴霧","C03","10ml × 3瓶/盒",570,16,"乳酸菌發酵液、百里香、薄荷"],["CordiBella 甦活保濕露","D01","150ml",1550,44,"蟬花菌絲體、白茅根、透明質酸鈉"],["CordiBella 甦活精萃","D01","30ml",1500,44,"醣基海藻糖、蟬花、胜肽"],["CordiBella 甦活緊緻霜","D01","50g",2500,72,"燕麥仁油、蟬花、羊胎盤萃取"],["995造型悠遊卡","U01","19g/個",380,0,"造型悠遊卡"],["康悅兒收納包（組）","U01","2個1組",300,0,"rPET 回收布料、黃銅拉鍊"]];
+const TOP={A:"保健食品",B:"寵愛毛孩",C:"健康生活",D:"個人保養",U:"文創品"};
+const SUB={A01:"全能防護",A02:"關鍵調理",A03:"順暢保衛",A04:"強健靈活",A05:"活力丰采",A06:"晶亮守護",A07:"快樂賦活",A08:"循環保健",A09:"機能食品",B01:"寵物保健",C01:"臉部護理",C02:"身體護理",C03:"口腔護理",D01:"臉部保養",U01:"文創品"};
+const STG=["有興趣","已介紹","試用中","已購買","定期回購","暫不需要"];
+const ACTIVE=[0,1,2,3,4];
+const PBN=Object.fromEntries(P.map(p=>[p[0],p]));
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const addDays=(s,n)=>{const d=new Date((s||today())+"T00:00:00");d.setDate(d.getDate()+n);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const dayDiff=s=>Math.round((new Date(s+"T00:00:00")-new Date(today()+"T00:00:00"))/864e5);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove("on"),1800)}
+
+/* ---------------- storage ---------------- */
+let customers={}; // id -> doc
+const KEY="uvaco_tracker";
+const store={mode:"local",
+  async init(){
+    try{customers=JSON.parse(localStorage.getItem(KEY)||"{}")}catch(e){customers={}}
+    let persisted=false;
+    try{if(navigator.storage&&navigator.storage.persist)persisted=await navigator.storage.persist()}catch(e){}
+    setSync("📱 資料只存在這支手機"+(persisted?"（已設為持久保存）":"・請定期備份"),!persisted);
+    render();
+  },
+  _write(){try{localStorage.setItem(KEY,JSON.stringify(customers));localStorage.setItem(KEY+"_saved",new Date().toISOString())}catch(e){toast("手機儲存空間不足，請先備份")}},
+  async save(c){c.updated=new Date().toISOString();customers[c.id]=c;this._write();render()},
+  async del(id){delete customers[id];this._write();render()}
+};
+function setSync(t,warn){const el=$("#sync");el.textContent=t;el.style.color=warn?"var(--warn)":"var(--mu)"}
+
+/* ---------------- derived ---------------- */
+function allItems(){const out=[];Object.values(customers).forEach(c=>(c.items||[]).forEach(it=>out.push({c,it})));return out}
+function dueList(days=7){return allItems().filter(({it})=>it.next&&ACTIVE.includes(+it.stage)&&dayDiff(it.next)<=days).sort((a,b)=>a.it.next.localeCompare(b.it.next))}
+function dueLabel(s){if(!s)return"";const d=dayDiff(s);if(d<0)return`<span class="od">逾期 ${-d} 天</span>`;if(d===0)return`<span class="td">今天</span>`;if(d===1)return`<span class="td">明天</span>`;return`<span class="muted">${s.slice(5)}（${d} 天後）</span>`}
+const BUY=[3,4];
+function runOut(it){if(!BUY.includes(+it.stage)||!it.buy)return null;return addDays(it.buy,(+it.qty||1)*(+it.days||30)+(+it.extra||0))}
+function repurList(win){return allItems().map(x=>({...x,out:runOut(x.it)})).filter(x=>x.out&&dayDiff(x.out)<=win).sort((a,b)=>a.out.localeCompare(b.out))}
+const LEAD=7;
+function outLabel(s){if(!s)return"";const d=dayDiff(s);if(d<0)return`<span class="od">已用完 ${-d} 天</span>`;if(d===0)return`<span class="od">今天用完</span>`;if(d<=LEAD)return`<span class="td">${d} 天後用完（${s.slice(5)}）</span>`;return`<span class="muted">預計 ${s.slice(5)} 用完</span>`}
+const SVof=n=>PBN[n]?+PBN[n][4]:0;
+const fmtSV=n=>Math.round(n).toLocaleString();
+function ordersOf(it){if(it.orders&&it.orders.length)return it.orders;return BUY.includes(+it.stage)&&it.buy?[{d:it.buy,q:+it.qty||1}]:[]}
+function syncOrder(it){const o=ordersOf(it).slice();if(!it.buy)return;const cur={d:it.buy,q:+it.qty||1};if(!o.length)o.push(cur);else o[o.length-1]=cur;it.orders=o}
+function itemSV(it){return ordersOf(it).reduce((a,o)=>a+o.q*SVof(it.p),0)}
+function monthlyEst(it){return BUY.includes(+it.stage)&&it.buy?SVof(it.p)*30/(+it.days||30):0}
+function custSV(c){return (c.items||[]).reduce((a,i)=>a+itemSV(i),0)}
+function custEst(c){return (c.items||[]).reduce((a,i)=>a+monthlyEst(i),0)}
+function monthSV(ym){let t=0;allItems().forEach(({it})=>ordersOf(it).forEach(o=>{if(o.d&&o.d.slice(0,7)===ym)t+=o.q*SVof(it.p)}));return t}
+function ensureBuy(it){if(BUY.includes(+it.stage)&&!it.buy){it.buy=today();it.qty=it.qty||1;it.days=it.days||30;it.extra=0;syncOrder(it)}}
+function rpFields(it,attr){if(!BUY.includes(+it.stage))return"";const o=runOut(it);
+  return `<div class="rp"><div><label>購買日</label><input type="date" ${attr("buy")} value="${it.buy||""}"></div>
+  <div><label>數量</label><input type="number" min="1" ${attr("qty")} value="${it.qty||1}"></div>
+  <div><label>每份可用天數</label><input type="number" min="1" ${attr("days")} value="${it.days||30}"></div>
+  <div class="out">🔁 ${o?outLabel(o):"填購買日即可計算"}<span class="svs" style="float:right">本次 ${it.qty||1} × ${SVof(it.p)} = ${fmtSV((it.qty||1)*SVof(it.p))} SV・月估 ${fmtSV(monthlyEst(it))} SV${ordersOf(it).length>1?`・累計 ${fmtSV(itemSV(it))} SV（${ordersOf(it).length} 次）`:""}</span></div></div>`}
+const stgTag=s=>`<span class="stg s${s}">${STG[s]}</span>`;
+
+/* ---------------- views ---------------- */
+let view="prod",pf={cat:"ALL",q:"",only:false},cf={q:""};
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{view=b.dataset.v;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("act",x===b));render()});
+function render(){
+  const due=dueList(0).length+repurList(LEAD).length+upcomingAppts(0).length;const bd=$("#todoBd");bd.hidden=!due;bd.textContent=due;
+  ({prod:vProd,cust:vCust,todo:vTodo,ana:vAna,set:vSet})[view]();
+  if(panelState.kind==="prod")openProduct(panelState.key,true);
+}
+function backupNag(){let bk="";try{bk=localStorage.getItem(KEY+"_backup")||""}catch(e){}
+  const n=Object.keys(customers).length;if(n<3)return"";const d=bk?Math.floor((Date.now()-new Date(bk))/864e5):999;
+  return d>=14?`<div class="box" style="margin-bottom:12px;background:#fff8e6;border-color:#f3d9a4;font-size:13px">💾 ${bk?`已經 ${d} 天沒備份`:"還沒備份過"}。資料只存在這支手機，建議到「設定」匯出備份。 <button class="btn sm" onclick="backup()">立即備份</button></div>`:""}
+function kpis(){
+  const items=allItems();const act=items.filter(x=>ACTIVE.includes(+x.it.stage));
+  const od=dueList(-1).length,td=dueList(0).length,rp=repurList(LEAD).length;const ym=today().slice(0,7);const lym=(()=>{const d=new Date(ym+"-01T00:00:00");d.setMonth(d.getMonth()-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")})();
+  const prodN=new Set(act.map(x=>x.it.p)).size;
+  return backupNag()+`<div class="kpis"><div class="kpi"><div class="k">客戶</div><div class="v">${Object.keys(customers).length}</div></div>
+  <div class="kpi"><div class="k">進行中的產品需求</div><div class="v">${act.length}</div></div>
+  <div class="kpi"><div class="k">被需要的產品</div><div class="v">${prodN}<span style="font-size:13px;color:var(--mu)"> / 57</span></div></div>
+  <div class="kpi ${td?"bad":""}"><div class="k">今天要跟進（含逾期 ${od}）</div><div class="v">${td}</div></div>
+  <div class="kpi ${rp?"bad":""}"><div class="k">回購提醒（${LEAD} 天內用完）</div><div class="v">${rp}</div></div></div>
+  <div class="svb"><div><div class="k">本月成交 SV</div><div class="v">${fmtSV(monthSV(ym))}</div></div>
+  <div><div class="k">上月成交 SV</div><div class="v">${fmtSV(monthSV(lym))}</div></div>
+  <div><div class="k">每月預估回購 SV</div><div class="v">${fmtSV(Object.values(customers).reduce((a,c)=>a+custEst(c),0))}</div></div>
+  <div><div class="k">14 天內可望回購 SV</div><div class="v">${fmtSV(repurList(14).reduce((a,x)=>a+(+x.it.qty||1)*SVof(x.it.p),0))}</div></div></div>`;
+}
+function vProd(){
+  const items=allItems();const by={};items.forEach(({c,it})=>{(by[it.p]=by[it.p]||[]).push({c,it})});
+  const funnel=STG.map((s,i)=>`<div class="fn"><div>${stgTag(i)}</div><div class="v">${items.filter(x=>+x.it.stage===i).length}</div></div>`).join("");
+  let list=P.filter(p=>(pf.cat==="ALL"||p[1][0]===pf.cat)&&(!pf.q||(p[0]+p[5]+SUB[p[1]]).includes(pf.q))&&(!pf.only||by[p[0]]));
+  list=list.map(p=>({p,n:(by[p[0]]||[]).filter(x=>ACTIVE.includes(+x.it.stage)).length,all:by[p[0]]||[]}));
+  if(pf.only)list.sort((a,b)=>b.n-a.n);
+  $("#main").innerHTML=kpis()+`<div class="funnel">${funnel}</div>
+  <div class="bar">${[["ALL","全部"],...Object.entries(TOP)].map(([k,v])=>`<button class="chip ${pf.cat===k?"act":""}" data-c="${k}">${v}</button>`).join("")}
+  <label style="font-size:13px;display:flex;align-items:center;gap:4px"><input type="checkbox" id="only" ${pf.only?"checked":""}>只看有需求的產品</label></div>
+  <div class="bar"><input type="search" id="pq" placeholder="搜尋產品或成分" value="${esc(pf.q)}"></div>
+  <table><thead><tr><th>產品</th><th class="hide-m">規格</th><th class="r hide-m">售價</th><th class="r">SV</th><th>需求客戶</th><th>階段分布</th><th class="hide-m">最近跟進／回購</th></tr></thead><tbody>
+  ${list.map(({p,n,all})=>{const cnt=STG.map((s,i)=>[i,all.filter(x=>+x.it.stage===i).length]).filter(x=>x[1]);
+    const nx=all.filter(x=>x.it.next&&ACTIVE.includes(+x.it.stage)).map(x=>x.it.next).sort()[0];
+    return `<tr class="click" data-p="${esc(p[0])}"><td><b>${esc(p[0])}</b><div class="ser">${TOP[p[1][0]]}・${SUB[p[1]]}</div></td>
+    <td class="hide-m muted">${esc(p[2])}</td><td class="r hide-m">$${p[3].toLocaleString()}</td>
+    <td class="r">${p[4]}${(()=>{const t=all.reduce((a,x)=>a+itemSV(x.it),0);return t?`<div class="svs">累計 ${fmtSV(t)}</div>`:""})()}</td>
+    <td><b style="color:var(--g)">${n||""}</b>${!n?'<span class="muted">—</span>':""}</td>
+    <td>${cnt.map(([i,k])=>`<span class="stg s${i}">${STG[i]} ${k}</span>`).join("")}</td>
+    <td class="hide-m">${nx?dueLabel(nx):""}${(()=>{const r=all.map(x=>runOut(x.it)).filter(Boolean).filter(o=>dayDiff(o)<=LEAD).length;return r?`<div style="font-size:12px" class="td">🔁 ${r} 位快用完</div>`:""})()}</td></tr>`}).join("")}
+  </tbody></table>
+  <div class="note">點產品可查看及新增需要它的客戶。產品資料來自葡眾官網（2026/11/18），售價以官網為準。</div>`;
+  document.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{pf.cat=b.dataset.c;render()});
+  $("#only").onchange=e=>{pf.only=e.target.checked;render()};
+  const q=$("#pq");q.oninput=()=>{pf.q=q.value.trim();const pos=q.selectionStart;render();const n=$("#pq");n.focus();n.setSelectionRange(pos,pos)};
+  document.querySelectorAll("tr[data-p]").forEach(r=>r.onclick=()=>openProduct(r.dataset.p));
+}
+function vCust(){
+  let list=Object.values(customers).filter(c=>!cf.q||(c.name+(c.contact||"")+(c.note||"")+(c.items||[]).map(i=>i.p).join("")).includes(cf.q))
+    .sort((a,b)=>(a.name||"").localeCompare(b.name||"","zh-Hant"));
+  $("#main").innerHTML=kpis()+`<div class="bar"><input type="search" id="cq" placeholder="搜尋客戶、聯絡方式、產品" value="${esc(cf.q)}">
+  <button class="btn" id="addC">＋ 新增客戶</button><button class="btn sec" id="csv">複製 CSV</button></div>
+  ${list.length?`<div class="cards">${list.map(c=>{const act=(c.items||[]).filter(i=>ACTIVE.includes(+i.stage));
+    const nx=act.filter(i=>i.next).sort((a,b)=>a.next.localeCompare(b.next))[0];
+    return `<div class="cc" data-id="${c.id}"><div class="nm">${esc(c.name)}</div><div class="ct">${esc(c.contact||"")}${custSV(c)?`<span class="svs" style="float:right">累計 ${fmtSV(custSV(c))} SV・月估 ${fmtSV(custEst(c))}</span>`:""}</div>
+    <div>${(c.tags||[]).map(t=>`<span class="tag">${SUB[t]}</span>`).join("")}</div>
+    <div style="margin-top:4px">${act.slice(0,4).map(i=>`<div style="font-size:12.5px">${esc(i.p)} ${stgTag(i.stage)}</div>`).join("")}${act.length>4?`<div class="muted" style="font-size:12px">…另 ${act.length-4} 項</div>`:""}</div>
+    ${(()=>{const a=(c.appts||[]).filter(a=>!a.done&&a.date>=today()).sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time))[0];return a?`<div class="due">📍 ${apptWhen(a)}・${esc(a.purpose||"拜訪")}${a.place?"＠"+esc(a.place):""}</div>`:""})()}
+    ${nx?`<div class="due">下次跟進：${dueLabel(nx.next)}・${esc(nx.p)}</div>`:""}
+    ${(c.items||[]).map(i=>[i,runOut(i)]).filter(x=>x[1]).sort((a,b)=>a[1].localeCompare(b[1])).slice(0,1).map(([i,o])=>`<div class="due">🔁 ${esc(i.p)}：${outLabel(o)}</div>`).join("")}</div>`}).join("")}</div>`
+    :`<div class="empty">還沒有客戶。按「新增客戶」開始記錄，或到產品看板點產品直接加入需求客戶。</div>`}`;
+  const q=$("#cq");q.oninput=()=>{cf.q=q.value.trim();const pos=q.selectionStart;render();const n=$("#cq");n.focus();n.setSelectionRange(pos,pos)};
+  $("#addC").onclick=()=>openCustomer(null);
+  $("#csv").onclick=copyCSV;
+  document.querySelectorAll(".cc").forEach(el=>el.onclick=()=>openCustomer(el.dataset.id));
+}
+function vTodo(){
+  const list=dueList(7);const rl=repurList(14);const ap=upcomingAppts(14);
+  const apHtml=`<div class="bar" style="margin-top:4px"><button class="btn" id="bulkCal">📅 30 天內全部加入行事曆</button><button class="btn sec" id="newAp">＋ 新增客戶行程</button></div>
+  <h4>📍 客戶行程（14 天內）</h4>`+(ap.length?`<table class="stack"><thead><tr><th>時間</th><th>客戶</th><th>目的</th><th>地點</th><th></th></tr></thead><tbody>
+  ${ap.map(({c,a},k)=>`<tr><td><b>${apptWhen(a)}</b></td><td><a href="#" data-oc="${c.id}">${esc(c.name)}</a><div class="ser">${esc(c.contact||"")}</div></td>
+  <td>${esc(a.purpose||"拜訪")}${a.note?`<div class="ser">${esc(a.note)}</div>`:""}</td><td>${a.place?`📍 <a href="${mapURL(a.place)}" target="_blank" rel="noopener">${esc(a.place)}</a>`:'<span class="muted">—</span>'}</td>
+  <td style="white-space:nowrap"><button class="btn sec sm" data-tac="${k}">📅</button> <button class="btn sec sm" data-tae="${k}">編輯</button></td></tr>`).join("")}</tbody></table>`
+  :`<div class="empty" style="padding:18px">14 天內沒有排定的客戶行程。</div>`);
+  const rpHtml=`<h4>🔁 回購提醒（14 天內用完）</h4>`+(rl.length?`<table class="stack"><thead><tr><th>預計用完</th><th>客戶</th><th>產品</th><th class="hide-m">上次購買</th><th class="r">SV</th><th></th></tr></thead><tbody>
+  ${rl.map(({c,it,out},k)=>`<tr><td>${outLabel(out)}</td><td><a href="#" data-oc="${c.id}">${esc(c.name)}</a><div class="ser">${esc(c.contact||"")}</div></td>
+  <td>${esc(it.p)}</td><td class="hide-m muted">${it.buy}・${it.qty||1} 份 × ${it.days||30} 天</td><td class="r svs">${fmtSV((it.qty||1)*SVof(it.p))}</td>
+  <td style="white-space:nowrap"><button class="btn sm" data-rb="${k}">已回購</button> <button class="btn sec sm" data-rs="${k}">延後 7 天</button> <button class="btn sec sm" data-calr="${c.id}|${it.id}">📅</button></td></tr>`).join("")}</tbody></table>`
+  :`<div class="empty" style="padding:18px">14 天內沒有快用完的產品。客戶進入「已購買／定期回購」並填購買日後，會自動出現在這裡。</div>`)+`<h4>📅 跟進（7 天內與逾期）</h4>`;
+  $("#main").innerHTML=kpis()+apHtml+rpHtml+(list.length?`<table class="stack"><thead><tr><th>跟進日</th><th>客戶</th><th>產品</th><th>階段</th><th class="hide-m">備註</th><th></th></tr></thead><tbody>
+  ${list.map(({c,it},k)=>`<tr><td>${dueLabel(it.next)}</td><td><a href="#" data-oc="${c.id}">${esc(c.name)}</a><div class="ser">${esc(c.contact||"")}</div></td>
+  <td>${esc(it.p)}</td><td>${stgTag(it.stage)}</td><td class="hide-m muted" style="max-width:220px">${esc(it.note||"")}</td>
+  <td style="white-space:nowrap"><button class="btn sm" data-done="${k}">完成</button> <button class="btn sec sm" data-snz="${k}">延後 7 天</button> <button class="btn sec sm" data-calf="${c.id}|${it.id}">📅</button></td></tr>`).join("")}
+  </tbody></table><div class="note">列出 7 天內與逾期的跟進。「完成」會記一筆跟進紀錄並請你決定下次日期。</div>`
+  :`<div class="empty" style="padding:18px">7 天內沒有待跟進的事項 🎉</div>`);
+  document.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{const {c,it}=rl[+b.dataset.rs];const cc=structuredClone(c);const i=cc.items.find(x=>x.id===it.id);i.extra=(+i.extra||0)+7;store.save(cc);toast("已延後 7 天提醒")});
+  document.querySelectorAll("[data-rb]").forEach(b=>b.onclick=()=>rebuyDialog(rl[+b.dataset.rb]));
+  $("#bulkCal").onclick=()=>bulkCal(30);
+  document.querySelectorAll("[data-tac]").forEach(b=>b.onclick=()=>{const {c,a}=ap[+b.dataset.tac];calDialog(apptEv(c,a))});
+  document.querySelectorAll("[data-tae]").forEach(b=>b.onclick=()=>{const {c,a}=ap[+b.dataset.tae];apptDialog(c,a,apptPersistStored(c.id))});
+  $("#newAp").onclick=()=>{const cs=Object.values(customers).sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant"));if(!cs.length)return toast("請先新增客戶");
+    const d=$("#dlg");$("#dbody").innerHTML=`<h3 style="margin-top:0">📍 新增行程</h3><div class="fld"><label>選擇客戶</label><select id="pk">${cs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></div>
+    <div class="calrow"><button class="btn" id="pk_ok">下一步</button><button class="btn sec" id="pk_x">取消</button></div>`;d.showModal();
+    $("#pk_x").onclick=()=>d.close();$("#pk_ok").onclick=()=>{const c=customers[$("#pk").value];apptDialog(c,null,apptPersistStored(c.id))}};
+  document.querySelectorAll("[data-oc]").forEach(a=>a.onclick=e=>{e.preventDefault();openCustomer(a.dataset.oc)});
+  document.querySelectorAll("[data-snz]").forEach(b=>b.onclick=()=>{const {c,it}=list[+b.dataset.snz];const cc=structuredClone(c);const i=cc.items.find(x=>x.id===it.id);i.next=addDays(today(),7);store.save(cc);toast("已延後到 "+i.next)});
+  document.querySelectorAll("[data-done]").forEach(b=>b.onclick=()=>doneDialog(list[+b.dataset.done]));
+}
+/* ================= 行事曆 (.ics / Google) ================= */
+const TZ=(()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone}catch(e){return""}})();
+const pad=n=>String(n).padStart(2,"0");
+function dtLocal(date,time){return date.replace(/-/g,"")+"T"+(time||"10:00").replace(":","")+"00"}
+function addMin(date,time,m){const d=new Date(date+"T"+(time||"10:00")+":00");d.setMinutes(d.getMinutes()+(+m||30));return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"T"+pad(d.getHours())+pad(d.getMinutes())+"00"}
+function icsEsc(v){return String(v??"").replace(/\\/g,"\\\\").replace(/\r?\n/g,"\\n").replace(/,/g,"\\,").replace(/;/g,"\\;")}
+function fold(l){const out=[];let cur="",bytes=0;for(const ch of l){const b=new TextEncoder().encode(ch).length;if(bytes+b>73){out.push(cur);cur=" "+ch;bytes=1+b}else{cur+=ch;bytes+=b}}out.push(cur);return out.join("\r\n")}
+function icsVEvent(e){
+  const now=new Date();const stamp=now.getUTCFullYear()+pad(now.getUTCMonth()+1)+pad(now.getUTCDate())+"T"+pad(now.getUTCHours())+pad(now.getUTCMinutes())+"00Z";
+  const L=["BEGIN:VEVENT","UID:"+e.uid+"@uvaco-tracker","DTSTAMP:"+stamp,"DTSTART:"+dtLocal(e.date,e.time),"DTEND:"+addMin(e.date,e.time,e.dur),
+    "SUMMARY:"+icsEsc(e.title)];
+  if(e.loc)L.push("LOCATION:"+icsEsc(e.loc));
+  if(e.desc)L.push("DESCRIPTION:"+icsEsc(e.desc));
+  if(e.alarm!==""&&e.alarm!=null&&+e.alarm>=0)L.push("BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+icsEsc(e.title),"TRIGGER:-PT"+(+e.alarm)+"M","END:VALARM");
+  L.push("END:VEVENT");return L;
+}
+function icsCal(evs){return ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//uvaco-tracker//zh-Hant","CALSCALE:GREGORIAN","METHOD:PUBLISH",...evs.flatMap(icsVEvent),"END:VCALENDAR"].map(fold).join("\r\n")+"\r\n"}
+const isIOS=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+function openICS(evs,name){
+  const text=icsCal(evs);
+  if(isIOS()){location.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(text);return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"text/calendar;charset=utf-8"}));a.download=name+".ics";
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);
+}
+function gcalURL(e){const q=new URLSearchParams({action:"TEMPLATE",text:e.title,dates:dtLocal(e.date,e.time)+"/"+addMin(e.date,e.time,e.dur),details:e.desc||"",location:e.loc||""});if(TZ)q.set("ctz",TZ);return "https://calendar.google.com/calendar/render?"+q.toString()}
+const mapURL=p=>"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(p);
+const ALARMS=[["","不提醒"],["0","準時"],["10","10 分鐘前"],["30","30 分鐘前"],["60","1 小時前"],["120","2 小時前"],["1440","1 天前"]];
+const DURS=[[15,"15 分鐘"],[30,"30 分鐘"],[60,"1 小時"],[90,"1.5 小時"],[120,"2 小時"],[180,"3 小時"]];
+const opt=(arr,v)=>arr.map(([k,t])=>`<option value="${k}" ${String(k)===String(v)?"selected":""}>${t}</option>`).join("");
+function custInfo(c){return `客戶：${c.name}${c.contact?"\n聯絡："+c.contact:""}`}
+function followEv(c,it){return {uid:`f-${c.id}-${it.id}`,title:`跟進｜${c.name}・${it.p}`,date:it.next&&it.next>=today()?it.next:today(),time:"10:00",dur:15,alarm:"0",loc:"",
+  desc:`${custInfo(c)}\n產品：${it.p}（${STG[it.stage]}）${it.note?"\n備註："+it.note:""}\n— 葡眾客戶需求追蹤`}}
+function rebuyEv(c,it){const out=runOut(it);let d=addDays(out,-3);if(d<today())d=today();
+  return {uid:`r-${c.id}-${it.id}-${it.buy}`,title:`回購提醒｜${c.name}・${it.p}`,date:d,time:"10:00",dur:15,alarm:"0",loc:"",
+  desc:`${custInfo(c)}\n產品：${it.p}\n上次購買：${it.buy}・${it.qty||1} 份\n預計用完：${out}\n單位 SV：${SVof(it.p)}\n— 葡眾客戶需求追蹤`}}
+function apptEv(c,a){return {uid:`a-${a.id}`,title:`${a.purpose||"拜訪"}｜${c.name}`,date:a.date,time:a.time,dur:a.dur||60,alarm:a.alarm??"60",loc:a.place||"",
+  desc:`${custInfo(c)}${a.purpose?"\n目的："+a.purpose:""}${a.note?"\n備註："+a.note:""}${a.place?"\n地圖："+mapURL(a.place):""}\n— 葡眾客戶需求追蹤`}}
+function calDialog(ev){
+  const d=$("#dlg");const e={...ev};
+  $("#dbody").innerHTML=`<h3 style="margin-top:0">📅 加入行事曆</h3>
+  <div class="fgrid"><div class="full"><label>標題</label><input type="text" id="ce_t" value="${esc(e.title)}"></div>
+  <div><label>日期</label><input type="date" id="ce_d" value="${e.date}"></div><div><label>時間</label><input type="time" id="ce_h" value="${e.time}"></div>
+  <div><label>長度</label><select id="ce_u">${opt(DURS,e.dur)}</select></div><div><label>提醒</label><select id="ce_a">${opt(ALARMS,e.alarm)}</select></div>
+  <div class="full"><label>地點</label><input type="text" id="ce_l" value="${esc(e.loc)}" placeholder="可留空"></div></div>
+  <div class="calrow" style="margin-top:14px"><button class="btn" id="ce_ics">📲 加入手機行事曆</button><a class="btn sec" id="ce_g" target="_blank" rel="noopener" style="text-decoration:none">Google 日曆</a><button class="btn sec" id="ce_x">關閉</button></div>
+  <p class="muted" style="font-size:12px;line-height:1.6;margin:10px 0 0">iPhone：會開啟「加入行事曆」畫面，按「加入」即可。<br>Android：會下載 .ics 檔，點開後選日曆 App 加入；或直接按「Google 日曆」。<br>Google 日曆連結無法帶入提醒時間，請在 Google 日曆裡設定。</p>`;
+  const read=()=>Object.assign(e,{title:$("#ce_t").value.trim()||ev.title,date:$("#ce_d").value||e.date,time:$("#ce_h").value||"10:00",dur:+$("#ce_u").value,alarm:$("#ce_a").value,loc:$("#ce_l").value.trim()});
+  const upd=()=>{read();$("#ce_g").href=gcalURL(e)};upd();
+  d.querySelectorAll("#dbody input,#dbody select").forEach(el=>el.addEventListener("input",upd));
+  $("#ce_ics").onclick=()=>{read();openICS([e],"行事曆_"+e.date);toast("已產生行事曆檔")};
+  $("#ce_x").onclick=()=>d.close();
+  if(!d.open)d.showModal();
+}
+function bulkCal(days){
+  const lim=addDays(today(),days),evs=[];
+  allItems().forEach(({c,it})=>{
+    if(it.next&&ACTIVE.includes(+it.stage)&&it.next<=lim)evs.push(followEv(c,it));
+    const o=runOut(it);if(o&&+it.stage!==5&&addDays(o,-3)<=lim)evs.push(rebuyEv(c,it));
+  });
+  Object.values(customers).forEach(c=>(c.appts||[]).forEach(a=>{if(!a.done&&a.date>=today()&&a.date<=lim)evs.push(apptEv(c,a))}));
+  if(!evs.length)return toast(`${days} 天內沒有需要加入的事項`);
+  const d=$("#dlg");
+  $("#dbody").innerHTML=`<h3 style="margin-top:0">📅 全部加入行事曆</h3><p>${days} 天內共有 <b>${evs.length}</b> 個事項（跟進、回購提醒、客戶行程），會整理成一個行事曆檔。</p>
+  <p class="muted" style="font-size:12.5px;line-height:1.6">跟進和回購提醒預設在當天 10:00，回購提醒排在預計用完前 3 天。重複匯入時，大部分行事曆 App 會更新同一個事項；如果出現重複，刪掉舊的即可。</p>
+  <div class="calrow"><button class="btn" id="bk_ok">📲 匯出到行事曆</button><button class="btn sec" id="bk_x">取消</button></div>`;
+  d.showModal();$("#bk_x").onclick=()=>d.close();
+  $("#bk_ok").onclick=()=>{openICS(evs,"客戶追蹤_"+today());d.close();toast(`已匯出 ${evs.length} 個事項`)};
+}
+/* ================= 客戶行程 ================= */
+const PURPOSES=["產品介紹","送試用包","回購送貨","回訪關心","健康分享會","收款"];
+function apptDialog(c,a,persist){
+  const isNew=!a;a=a?{...a}:{id:uid(),date:addDays(today(),1),time:"14:00",dur:60,place:"",purpose:"",note:"",alarm:"60",done:false};
+  const d=$("#dlg");
+  $("#dbody").innerHTML=`<h3 style="margin-top:0">📍 ${isNew?"新增":"編輯"}行程・${esc(c.name)}</h3>
+  <div class="fgrid"><div><label>日期 *</label><input type="date" id="ap_d" value="${a.date}"></div><div><label>時間 *</label><input type="time" id="ap_h" value="${a.time}"></div>
+  <div><label>長度</label><select id="ap_u">${opt(DURS,a.dur)}</select></div><div><label>行事曆提醒</label><select id="ap_a">${opt(ALARMS,a.alarm)}</select></div>
+  <div class="full"><label>地點</label><input type="text" id="ap_l" value="${esc(a.place)}" placeholder="例：Starbucks Mid Valley、客戶家"></div>
+  <div class="full"><label>目的</label><input type="text" id="ap_p" list="ap_pl" value="${esc(a.purpose)}" placeholder="例：產品介紹"><datalist id="ap_pl">${PURPOSES.map(p=>`<option value="${p}">`).join("")}</datalist></div>
+  <div class="full"><label>備註</label><textarea id="ap_n" rows="2" placeholder="例：帶康爾喜試用包 3 包">${esc(a.note)}</textarea></div>
+  ${isNew?"":`<div class="full"><label><input type="checkbox" id="ap_done" ${a.done?"checked":""} style="width:auto"> 已完成</label></div>`}</div>
+  <div class="calrow" style="margin-top:14px"><button class="btn" id="ap_cal">儲存並加入行事曆</button><button class="btn sec" id="ap_ok">只儲存</button><button class="btn sec" id="ap_x">取消</button></div>`;
+  if(!d.open)d.showModal();$("#ap_x").onclick=()=>d.close();
+  const save=cal=>{const dt=$("#ap_d").value,tm=$("#ap_h").value;if(!dt||!tm)return toast("請填日期和時間");
+    Object.assign(a,{date:dt,time:tm,dur:+$("#ap_u").value,alarm:$("#ap_a").value,place:$("#ap_l").value.trim(),purpose:$("#ap_p").value.trim(),note:$("#ap_n").value.trim(),done:isNew?false:$("#ap_done").checked});
+    persist(a,isNew);toast(isNew?"已新增行程":"已更新行程");
+    if(cal)calDialog(apptEv(c,a));else d.close()};
+  $("#ap_cal").onclick=()=>save(true);$("#ap_ok").onclick=()=>save(false);
+}
+function upcomingAppts(days){const lim=addDays(today(),days),out=[];Object.values(customers).forEach(c=>(c.appts||[]).forEach(a=>{if(!a.done&&a.date>=today()&&a.date<=lim)out.push({c,a})}));
+  return out.sort((x,y)=>(x.a.date+x.a.time).localeCompare(y.a.date+y.a.time))}
+const wk=s=>"日一二三四五六"[new Date(s+"T00:00:00").getDay()];
+function apptWhen(a){const dd=dayDiff(a.date);return `${a.date.slice(5)}（${wk(a.date)}）${a.time}${dd===0?' <span class="td">今天</span>':dd===1?' <span class="td">明天</span>':""}`}
+function apptPersistStored(cid){return (a,isNew)=>{const cc=structuredClone(customers[cid]);cc.appts=cc.appts||[];
+  const i=cc.appts.findIndex(x=>x.id===a.id);if(i>=0)cc.appts[i]=a;else cc.appts.push(a);
+  if(isNew){cc.log=cc.log||[];cc.log.unshift({d:today(),t:`【行程】${a.date} ${a.time} ${a.purpose||"拜訪"}${a.place?"＠"+a.place:""}`});cc.log=cc.log.slice(0,200)}
+  store.save(cc)}}
+/* item-level calendar buttons (delegated) */
+document.addEventListener("click",e=>{const b=e.target.closest("[data-calf],[data-calr]");if(!b)return;e.preventDefault();
+  const [cid,iid]=(b.dataset.calf||b.dataset.calr).split("|");
+  const c=(panelState.kind==="cust"&&window.__draft&&window.__draft.id===cid)?window.__draft:customers[cid];if(!c)return;
+  const it=(c.items||[]).find(x=>x.id===iid);if(!it)return;
+  calDialog(b.dataset.calf?followEv(c,it):rebuyEv(c,it))});
+const calBtns=(c,it)=>{const f=it.next&&ACTIVE.includes(+it.stage),r=runOut(it)&&+it.stage!==5;
+  return f||r?`<div class="calrow">${f?`<button class="btn sec sm" data-calf="${c.id}|${it.id}">📅 跟進加入行事曆</button>`:""}${r?`<button class="btn sec sm" data-calr="${c.id}|${it.id}">📅 回購提醒加入行事曆</button>`:""}</div>`:""};
+
+function rebuyDialog({c,it}){
+  const d=$("#dlg");
+  $("#dbody").innerHTML=`<h3 style="margin-top:0">已回購：${esc(c.name)}・${esc(it.p)}</h3>
+  <div class="row2"><div class="fld"><label>購買日</label><input type="date" id="rbd" value="${today()}"></div>
+  <div class="fld"><label>數量</label><input type="number" id="rbq" min="1" value="${it.qty||1}"></div></div>
+  <div class="fld"><label>每份可用天數</label><input type="number" id="rbn" min="1" value="${it.days||30}"></div>
+  <div class="svs" style="margin:-4px 0 12px">每份 ${SVof(it.p)} SV</div>
+  <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn sec" id="dc">取消</button><button class="btn" id="dok">儲存</button></div>`;
+  d.showModal();$("#dc").onclick=()=>d.close();
+  $("#dok").onclick=()=>{const cc=structuredClone(c);const i=cc.items.find(x=>x.id===it.id);
+    const prev=ordersOf(i).slice();i.buy=$("#rbd").value||today();i.qty=+$("#rbq").value||1;i.days=+$("#rbn").value||30;i.extra=0;i.stage=4;i.updated=today();
+    prev.push({d:i.buy,q:i.qty});i.orders=prev;
+    cc.log=cc.log||[];cc.log.unshift({d:today(),t:`【${i.p}】回購 ${i.qty} 份（${fmtSV(i.qty*SVof(i.p))} SV），預計 ${runOut(i)} 用完`});cc.log=cc.log.slice(0,200);
+    store.save(cc);d.close();toast("已記錄回購")};
+}
+function doneDialog({c,it}){
+  const d=$("#dlg");
+  $("#dbody").innerHTML=`<h3 style="margin-top:0">完成跟進：${esc(c.name)}・${esc(it.p)}</h3>
+  <div class="fld"><label>這次跟進內容</label><textarea id="dn" rows="3" placeholder="例：已試用一週，反應不錯，想下單"></textarea></div>
+  <div class="row2"><div class="fld"><label>更新階段</label><select id="ds">${STG.map((s,i)=>`<option value="${i}" ${+it.stage===i?"selected":""}>${s}</option>`).join("")}</select></div>
+  <div class="fld"><label>下次跟進日（可留空）</label><input type="date" id="dd" value="${addDays(today(),14)}"></div></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn sec" id="dc">取消</button><button class="btn" id="dok">儲存</button></div>`;
+  d.showModal();
+  $("#dc").onclick=()=>d.close();
+  $("#dok").onclick=()=>{const cc=structuredClone(c);const i=cc.items.find(x=>x.id===it.id);
+    const st=+$("#ds").value,txt=$("#dn").value.trim();
+    if(st!==+i.stage)i.stage=st; ensureBuy(i); i.next=$("#dd").value||""; i.updated=today();
+    cc.log=cc.log||[];cc.log.unshift({d:today(),t:`【${i.p}】${STG[st]}${txt?"："+txt:""}`});cc.log=cc.log.slice(0,200);
+    store.save(cc);d.close();toast("已記錄")};
+}
+
+function vAna(){
+  const cs=Object.values(customers);
+  if(!cs.length){$("#main").innerHTML=kpis()+`<div class="empty">還沒有客戶資料。新增幾位客戶和產品需求後，這裡會自動分析。</div>`;return}
+  const items=allItems();const live=items.filter(x=>+x.it.stage!==5);
+  const hasOrder=c=>(c.items||[]).some(i=>ordersOf(i).length);
+  const lk=c=>`<a href="#" data-oc="${c.id}">${esc(c.name)}</a>`;
+  const pct=(a,b)=>b?Math.round(a/b*100)+"%":"—";
+  // A. needs by series
+  const ser=Object.keys(SUB).filter(k=>k!=="U01").map(k=>{
+    const inS=c=>(c.items||[]).filter(i=>PBN[i.p]&&PBN[i.p][1]===k);
+    const want=cs.filter(c=>{const its=inS(c);const declined=its.length&&its.every(i=>+i.stage===5&&!ordersOf(i).length);return !declined&&((c.tags||[]).includes(k)||its.some(i=>+i.stage!==5))});
+    const bought=want.filter(c=>(c.items||[]).some(i=>PBN[i.p]&&PBN[i.p][1]===k&&ordersOf(i).length));
+    const intro=want.filter(c=>!bought.includes(c)&&(c.items||[]).some(i=>PBN[i.p]&&PBN[i.p][1]===k&&+i.stage>=1&&+i.stage!==5));
+    return {k,n:want.length,b:bought.length,i:intro.length,gap:want.length-bought.length-intro.length};
+  }).filter(x=>x.n).sort((a,b)=>b.n-a.n);
+  const mx=Math.max(1,...ser.map(x=>x.n));
+  const serHtml=ser.length?ser.map(x=>`<div class="hb"><span>${SUB[x.k]}</span><span class="tr">
+    <i class="c1" style="width:${x.b/mx*100}%"></i><i class="c2" style="width:${x.i/mx*100}%"></i><i class="c3" style="width:${x.gap/mx*100}%"></i></span>
+    <span class="muted">${x.n} 位${x.gap?`<br><b style="color:var(--warn)">${x.gap} 未介紹</b>`:""}</span></div>`).join("")+
+    `<div class="lg"><span><i class="c1"></i>已成交</span><span><i class="c2"></i>已介紹／試用</span><span><i class="c3"></i>只有需求、還沒介紹產品</span></div>`
+    :`<div class="muted">替客戶勾選「關心的方向」或加入產品後就會出現。</div>`;
+  // B. funnel (reached stage)
+  const F=[["產品需求",live.length],["已介紹以上",live.filter(x=>+x.it.stage>=1).length],["試用以上",live.filter(x=>+x.it.stage>=2).length],["已購買以上",live.filter(x=>+x.it.stage>=3||ordersOf(x.it).length).length],["定期回購",live.filter(x=>+x.it.stage===4).length]];
+  const f0=Math.max(1,F[0][1]);
+  const funHtml=F.map(([n,v],i)=>`<div class="hb"><span>${n}</span><span class="tr"><i class="c2" style="width:${v/f0*100}%;opacity:${1-i*.13}"></i></span><span class="muted">${v}・${pct(v,F[0][1])}</span></div>`).join("")
+    +`<div class="ds" style="margin-top:8px">介紹→試用 ${pct(F[2][1],F[1][1])}・試用→購買 ${pct(F[3][1],F[2][1])}・購買→定期回購 ${pct(F[4][1],F[3][1])}　｜　暫不需要 ${items.length-live.length} 項</div>`;
+  // C. product heat
+  const byP={};items.forEach(({c,it})=>{const o=byP[it.p]=byP[it.p]||{d:0,b:0,no:0,sv:0};if(+it.stage===5)o.no++;else o.d++;if(ordersOf(it).length)o.b++;o.sv+=itemSV(it)});
+  const prows=Object.entries(byP).sort((a,b)=>(b[1].d+b[1].no)-(a[1].d+a[1].no)||b[1].sv-a[1].sv).slice(0,12);
+  const prodHtml=prows.length?`<table class="mini"><thead><tr><th>產品</th><th class="r">需求</th><th class="r">成交</th><th class="r">轉換</th><th class="r">暫不需要</th><th class="r">累計 SV</th></tr></thead><tbody>
+    ${prows.map(([p,o])=>`<tr><td>${esc(p)}</td><td class="r">${o.d+o.no}</td><td class="r">${o.b}</td><td class="r"><b>${pct(o.b,o.d+o.no)}</b></td><td class="r muted">${o.no||""}</td><td class="r svs">${o.sv?fmtSV(o.sv):""}</td></tr>`).join("")}</tbody></table>`:`<div class="muted">尚無資料。</div>`;
+  // D. segments
+  const lapsed=c=>{const outs=(c.items||[]).map(runOut).filter(Boolean);return hasOrder(c)&&outs.length&&outs.every(o=>dayDiff(o)<-14)};
+  const seg={pot:[],act:[],risk:[],none:[]};
+  cs.forEach(c=>{const its=c.items||[];const act=its.some(i=>+i.stage!==5);
+    if(lapsed(c))seg.risk.push(c);else if(hasOrder(c))seg.act.push(c);else if(act||(!its.length&&(c.tags||[]).length))seg.pot.push(c);else seg.none.push(c)});
+  const segBox=(k,t,col,d)=>`<div style="background:${col}"><div style="font-size:12px">${t}</div><div class="v">${seg[k].length}</div><div class="ds" style="margin:0">${d}</div><div class="nms">${seg[k].slice(0,8).map(lk).join("、")}${seg[k].length>8?"…":""}</div></div>`;
+  const segHtml=`<div class="seg">${segBox("pot","潛在客戶","#fff8e6","有需求、尚未成交")}${segBox("act","購買中","#eef7ea","有成交且未斷貨太久")}${segBox("risk","流失風險","#fdeceb","已用完超過 14 天未回購")}${segBox("none","暫無需求","#f4f4f4","全部暫不需要或未填")}</div>`;
+  // E. opportunities
+  const opp=[];
+  cs.forEach(c=>{const linkedSer=new Set((c.items||[]).map(i=>PBN[i.p]&&PBN[i.p][1]));
+    (c.tags||[]).filter(t=>!linkedSer.has(t)).forEach(t=>{const sug=P.filter(p=>p[1]===t).slice(0,3).map(p=>p[0]);
+      if(sug.length)opp.push({w:1,h:`${lk(c)} 關心「${SUB[t]}」但還沒介紹任何產品 → 可介紹 ${sug.map(esc).join("、")}`})})});
+  items.filter(({it})=>+it.stage===2&&it.updated&&dayDiff(it.updated)<-14).forEach(({c,it})=>opp.push({w:2,h:`${lk(c)} 試用「${esc(it.p)}」已 ${-dayDiff(it.updated)} 天沒更新 → 問試用感受`}));
+  items.filter(({it})=>+it.stage===3&&ordersOf(it).length>=2).forEach(({c,it})=>opp.push({w:3,h:`${lk(c)} 已回購「${esc(it.p)}」${ordersOf(it).length} 次 → 可改成「定期回購」`}));
+  // cross-sell pairs among buyers
+  const buyers=cs.map(c=>({c,set:new Set((c.items||[]).filter(i=>ordersOf(i).length).map(i=>i.p))})).filter(x=>x.set.size);
+  const pair={};buyers.forEach(({set})=>{const a=[...set];a.forEach(x=>a.forEach(y=>{if(x!==y)pair[x+"|"+y]=(pair[x+"|"+y]||0)+1}))});
+  Object.entries(pair).filter(([,n])=>n>=2).sort((a,b)=>b[1]-a[1]).slice(0,5).forEach(([k,n])=>{const [x,y]=k.split("|");
+    const tgt=buyers.filter(b=>b.set.has(x)&&!b.set.has(y)&&!(b.c.items||[]).some(i=>i.p===y)).map(b=>b.c);
+    if(tgt.length)opp.push({w:4,h:`${n} 位買「${esc(x)}」的客戶也買了「${esc(y)}」→ 可推薦給 ${tgt.slice(0,5).map(lk).join("、")}`})});
+  opp.sort((a,b)=>a.w-b.w);
+  const oppHtml=opp.length?`<ol class="opp">${opp.slice(0,20).map(o=>`<li>${o.h}</li>`).join("")}</ol>${opp.length>20?`<div class="muted">另有 ${opp.length-20} 項…</div>`:""}`:`<div class="muted">目前沒有特別待處理的機會。</div>`;
+  // summary
+  const buyersN=cs.filter(hasOrder).length;
+  const est=cs.reduce((a,c)=>a+custEst(c),0);
+  $("#main").innerHTML=kpis()+`<div class="ana">
+  <div class="box full"><h5>重點摘要</h5><div class="ds" style="margin:0;font-size:13px;color:var(--ink);line-height:1.8">
+    ${cs.length} 位客戶中有 <b>${buyersN}</b> 位已成交（${pct(buyersN,cs.length)}）。
+    ${ser[0]?`需求最多的方向是「<b>${SUB[ser[0].k]}</b>」（${ser[0].n} 位）。`:""}
+    ${ser.filter(x=>x.gap).length?`有 <b>${ser.reduce((a,x)=>a+x.gap,0)}</b> 個需求還沒介紹產品。`:""}
+    ${seg.risk.length?`<b style="color:var(--bad)">${seg.risk.length}</b> 位有流失風險。`:""}
+    已成交客戶平均每月預估 <b>${buyersN?fmtSV(est/buyersN):0}</b> SV。</div></div>
+  <div class="box"><h5>需求方向分布</h5><div class="ds">依官網系列；包含勾選的關心方向與已加入的產品</div>${serHtml}</div>
+  <div class="box"><h5>銷售漏斗</h5><div class="ds">各產品需求走到哪個階段（不含暫不需要）</div>${funHtml}</div>
+  <div class="box full"><h5>客戶分群</h5><div class="ds">點名字可開啟客戶</div>${segHtml}</div>
+  <div class="box"><h5>產品需求熱度與轉換</h5><div class="ds">前 12 名；轉換＝成交客戶 ÷ 有需求客戶</div>${prodHtml}</div>
+  <div class="box"><h5>建議行動</h5><div class="ds">依未開發需求、試用停滯、回購習慣、交叉購買自動整理</div>${oppHtml}</div>
+  </div>`;
+  document.querySelectorAll("#main [data-oc]").forEach(a=>a.onclick=e=>{e.preventDefault();openCustomer(a.dataset.oc)});
+}
+
+/* ---------------- panel ---------------- */
+let panelState={};
+function showPanel(on){$("#panel").classList.toggle("on",on);$("#ov").classList.toggle("on",on);if(!on)panelState={}}
+$("#px").onclick=()=>showPanel(false);$("#ov").onclick=()=>showPanel(false);
+function openProduct(name,refresh){
+  const p=PBN[name];if(!p)return;panelState={kind:"prod",key:name};
+  const rows=allItems().filter(x=>x.it.p===name).sort((a,b)=>(+a.it.stage)-(+b.it.stage));
+  $("#pt").textContent=name;
+  $("#pbody").innerHTML=`<div class="muted" style="font-size:13px">${TOP[p[1][0]]}・${SUB[p[1]]}｜${esc(p[2])}｜$${p[3].toLocaleString()}｜${p[4]} SV</div>
+  <div style="font-size:13px;margin-top:6px">主要成分：${esc(p[5])}</div>
+  <h3>需要這項產品的客戶（${rows.length}）</h3>
+  ${rows.length?rows.map(({c,it})=>`<div class="it"><div class="h"><b><a href="#" data-oc="${c.id}">${esc(c.name)}</a> <span class="muted" style="font-weight:400;font-size:12px">${esc(c.contact||"")}</span></b><span>${dueLabel(it.next)}</span></div>
+    <div class="g"><select data-k="stage" data-c="${c.id}" data-i="${it.id}">${STG.map((s,i)=>`<option value="${i}" ${+it.stage===i?"selected":""}>${s}</option>`).join("")}</select>
+    <input type="date" data-k="next" data-c="${c.id}" data-i="${it.id}" value="${it.next||""}" title="下次跟進日"></div>
+    <input type="text" data-k="note" data-c="${c.id}" data-i="${it.id}" value="${esc(it.note||"")}" placeholder="備註（例：每月一盒、在意口味）" style="margin-top:6px">
+    ${rpFields(it,k=>`data-k="${k}" data-c="${c.id}" data-i="${it.id}"`)}${calBtns(c,it)}</div>`).join(""):`<div class="muted">還沒有客戶。</div>`}
+  <h3>加入需求客戶</h3>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><select id="pickC" style="flex:1;min-width:160px"><option value="">選擇既有客戶…</option>${Object.values(customers).filter(c=>!(c.items||[]).some(i=>i.p===name)).sort((a,b)=>a.name.localeCompare(b.name,"zh-Hant")).map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select>
+  <button class="btn" id="addToC">加入</button><button class="btn sec" id="newC">＋ 新客戶</button></div>`;
+  $("#pfoot").innerHTML="";
+  bindItemInputs();
+  document.querySelectorAll("#pbody [data-oc]").forEach(a=>a.onclick=e=>{e.preventDefault();openCustomer(a.dataset.oc)});
+  $("#addToC").onclick=()=>{const id=$("#pickC").value;if(!id)return toast("請先選客戶");const c=structuredClone(customers[id]);c.items=c.items||[];
+    c.items.push({id:uid(),p:name,stage:0,next:addDays(today(),3),note:"",updated:today()});store.save(c);toast("已加入 "+c.name)};
+  $("#newC").onclick=()=>openCustomer(null,name);
+  if(!refresh)showPanel(true);
+}
+function bindItemInputs(){
+  document.querySelectorAll("#pbody [data-k][data-i]").forEach(el=>{
+    const ev=el.tagName==="SELECT"||el.type==="date"?"change":"change";
+    el.addEventListener(ev,()=>{const c=structuredClone(customers[el.dataset.c]);const it=c.items.find(x=>x.id===el.dataset.i);if(!it)return;
+      const k=el.dataset.k;const v=["stage","qty","days"].includes(k)?+el.value:el.value;if(it[k]===v)return;it[k]=v;it.updated=today();
+      if(k==="buy"||k==="qty"||k==="days")it.extra=0;
+      if(k==="buy"||k==="qty")syncOrder(it);
+      ensureBuy(it);
+      if(k==="stage"){c.log=c.log||[];c.log.unshift({d:today(),t:`【${it.p}】階段改為「${STG[v]}」`});c.log=c.log.slice(0,200)}
+      store.save(c);toast("已儲存")});
+  });
+}
+function openCustomer(id,withProduct){
+  const isNew=!id;const c=isNew?{id:uid(),kind:"customer",name:"",contact:"",tags:[],note:"",items:[],log:[],created:today()}:structuredClone(customers[id]);
+  if(!c)return;
+  if(withProduct&&!c.items.some(i=>i.p===withProduct))c.items.push({id:uid(),p:withProduct,stage:0,next:addDays(today(),3),note:"",updated:today()});
+  panelState={kind:"cust",key:c.id};c.appts=c.appts||[];window.__draft=c;
+  const draw=()=>{
+    $("#pt").textContent=isNew?"新增客戶":c.name;
+    const linked=new Set(c.items.map(i=>i.p));
+    const sugg=P.filter(p=>c.tags.includes(p[1])&&!linked.has(p[0]));
+    $("#pbody").innerHTML=`<div class="row2"><div class="fld"><label>姓名／稱呼 *</label><input type="text" id="cn" value="${esc(c.name)}"></div>
+    <div class="fld"><label>聯絡方式（電話／LINE／WhatsApp）</label><input type="text" id="cct" value="${esc(c.contact)}"></div></div>
+    <div class="fld"><label>關心的方向（依官網產品系列）</label><div class="sugg" id="tags">${Object.entries(SUB).filter(([k])=>k!=="U01").map(([k,v])=>`<button data-t="${k}" style="${c.tags.includes(k)?"background:var(--g);color:#fff;border-style:solid":""}">${v}</button>`).join("")}</div></div>
+    <div class="fld"><label>客戶備註（生活習慣、預算、家人等）</label><textarea id="cnote" rows="2">${esc(c.note)}</textarea></div>
+    <h3>產品需求（${c.items.length}）${custSV(c)?`<span class="svs" style="font-weight:400;margin-left:8px">累計 ${fmtSV(custSV(c))} SV・每月預估 ${fmtSV(custEst(c))} SV</span>`:""}</h3>
+    ${c.items.map((it,k)=>{const p=PBN[it.p];return `<div class="it"><div class="h"><b>${esc(it.p)}</b><span>${p?`<span class="muted" style="font-size:12px">$${p[3].toLocaleString()}・${p[4]} SV</span>`:""} <button class="btn del sm" data-rm="${k}">移除</button></span></div>
+      <div class="g"><select data-ik="stage" data-k2="${k}">${STG.map((s,i)=>`<option value="${i}" ${+it.stage===i?"selected":""}>${s}</option>`).join("")}</select>
+      <input type="date" data-ik="next" data-k2="${k}" value="${it.next||""}" title="下次跟進日"></div>
+      <input type="text" data-ik="note" data-k2="${k}" value="${esc(it.note||"")}" placeholder="備註" style="margin-top:6px">
+      ${rpFields(it,f=>`data-ik="${f}" data-k2="${k}"`)}${calBtns(c,it)}</div>`}).join("")||'<div class="muted" style="margin-bottom:8px">尚未加入產品。</div>'}
+    <div style="display:flex;gap:8px"><input list="plist" id="addP" placeholder="輸入產品名稱加入…" style="flex:1"><datalist id="plist">${P.filter(p=>!linked.has(p[0])).map(p=>`<option value="${esc(p[0])}">`).join("")}</datalist><button class="btn sec" id="addPB">加入</button></div>
+    ${sugg.length?`<div class="fld" style="margin-top:10px"><label>依關心方向，可介紹的產品（點一下加入）</label><div class="sugg">${sugg.map(p=>`<button data-sp="${esc(p[0])}">＋ ${esc(p[0])}</button>`).join("")}</div></div>`:""}
+    <h3 style="display:flex;align-items:center;gap:8px">📍 行程<button class="btn sec sm" id="addAp" style="margin-left:auto">＋ 新增行程</button></h3>
+    ${(()=>{const up=c.appts.filter(a=>!a.done&&a.date>=today()).sort((x,y)=>(x.date+x.time).localeCompare(y.date+y.time));
+      const past=c.appts.filter(a=>a.done||a.date<today()).sort((x,y)=>(y.date+y.time).localeCompare(x.date+x.time)).slice(0,5);
+      const row=(a,p)=>`<div class="it ap ${p?"past":""}"><div class="h"><b>${apptWhen(a)}</b><span class="muted" style="font-size:12px">${DURS.find(x=>x[0]==a.dur)?.[1]||""}${a.done?"・已完成":""}</span></div>
+        <div>${esc(a.purpose||"拜訪")}${a.place?` <span class="pl">・📍 <a href="${mapURL(a.place)}" target="_blank" rel="noopener">${esc(a.place)}</a></span>`:""}</div>
+        ${a.note?`<div class="muted" style="font-size:13px">${esc(a.note)}</div>`:""}
+        <div class="calrow">${p?"":`<button class="btn sec sm" data-apc="${a.id}">📅 加入行事曆</button>`}<button class="btn sec sm" data-ape="${a.id}">編輯</button><button class="btn del sm" data-apx="${a.id}">刪除</button></div></div>`;
+      return (up.map(a=>row(a,false)).join("")||'<div class="muted" style="margin-bottom:8px">沒有排定的行程。</div>')+(past.length?`<div class="muted" style="font-size:12px;margin:6px 0">過去的行程</div>`+past.map(a=>row(a,true)).join(""):"")})()}
+    <h3>跟進紀錄</h3>
+    <div style="display:flex;gap:8px;margin-bottom:10px"><input type="text" id="logT" placeholder="新增一筆紀錄（例：電話聊過，下週送試用包）" style="flex:1"><button class="btn sec" id="logB">記錄</button></div>
+    ${(c.log||[]).map(l=>`<div class="log"><div class="d">${l.d}</div>${esc(l.t)}</div>`).join("")||'<div class="muted">尚無紀錄。</div>'}`;
+    $("#pfoot").innerHTML=`<button class="btn" id="saveC">儲存</button><button class="btn sec" id="cancelC">取消</button>${isNew?"":'<button class="btn del" id="delC" style="margin-left:auto">刪除客戶</button>'}`;
+    const keep=()=>{c.name=$("#cn").value.trim();c.contact=$("#cct").value.trim();c.note=$("#cnote").value.trim()};
+    document.querySelectorAll("#tags [data-t]").forEach(b=>b.onclick=()=>{keep();const t=b.dataset.t;c.tags=c.tags.includes(t)?c.tags.filter(x=>x!==t):[...c.tags,t];draw()});
+    document.querySelectorAll("[data-ik]").forEach(el=>el.onchange=()=>{const it=c.items[+el.dataset.k2];const k=el.dataset.ik;it[k]=["stage","qty","days"].includes(k)?+el.value:el.value;it.updated=today();
+      if(k==="buy"||k==="qty"||k==="days")it.extra=0;
+      if(k==="buy"||k==="qty")syncOrder(it);
+      if(["stage","buy","qty","days"].includes(k)){ensureBuy(it);keep();draw()}});
+    document.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{keep();c.items.splice(+b.dataset.rm,1);draw()});
+    const addP=n=>{keep();if(!PBN[n])return toast("找不到這個產品");if(c.items.some(i=>i.p===n))return;c.items.push({id:uid(),p:n,stage:0,next:addDays(today(),3),note:"",updated:today()});draw()};
+    $("#addPB").onclick=()=>addP($("#addP").value.trim());
+    $("#addP").onkeydown=e=>{if(e.key==="Enter")addP(e.target.value.trim())};
+    document.querySelectorAll("[data-sp]").forEach(b=>b.onclick=()=>addP(b.dataset.sp));
+    const apPersist=(a,isN)=>{keep();const i=c.appts.findIndex(x=>x.id===a.id);if(i>=0)c.appts[i]=a;else c.appts.push(a);
+      if(isN){c.log=c.log||[];c.log.unshift({d:today(),t:`【行程】${a.date} ${a.time} ${a.purpose||"拜訪"}${a.place?"＠"+a.place:""}`});c.log=c.log.slice(0,200)}
+      if(!isNew&&c.name)store.save(structuredClone(c));draw()};
+    $("#addAp").onclick=()=>{keep();if(!c.name)return toast("請先填客戶姓名");apptDialog(c,null,apPersist)};
+    document.querySelectorAll("[data-ape]").forEach(b=>b.onclick=()=>{keep();apptDialog(c,c.appts.find(a=>a.id===b.dataset.ape),apPersist)});
+    document.querySelectorAll("[data-apc]").forEach(b=>b.onclick=()=>{keep();calDialog(apptEv(c,c.appts.find(a=>a.id===b.dataset.apc)))});
+    document.querySelectorAll("[data-apx]").forEach(b=>b.onclick=()=>{keep();c.appts=c.appts.filter(a=>a.id!==b.dataset.apx);if(!isNew)store.save(structuredClone(c));draw();toast("已刪除行程")});
+    $("#logB").onclick=()=>{keep();const t=$("#logT").value.trim();if(!t)return;c.log=c.log||[];c.log.unshift({d:today(),t});c.log=c.log.slice(0,200);draw()};
+    $("#saveC").onclick=()=>{keep();if(!c.name)return toast("請填姓名");store.save(c);toast("已儲存");showPanel(false)};
+    $("#cancelC").onclick=()=>showPanel(false);
+    if(!isNew)$("#delC").onclick=()=>{const d=$("#dlg");$("#dbody").innerHTML=`<p>確定刪除「${esc(c.name)}」和所有紀錄？此動作無法復原。</p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn sec" id="dc">取消</button><button class="btn del" id="dy">刪除</button></div>`;d.showModal();$("#dc").onclick=()=>d.close();$("#dy").onclick=()=>{store.del(c.id);d.close();showPanel(false);toast("已刪除")}};
+  };
+  draw();showPanel(true);
+}
+function csvText(){
+  const rows=[["客戶","聯絡方式","關心方向","產品","階段","下次跟進","購買日","數量","每份天數","預計用完","單位SV","累計SV","每月預估SV","備註"]];
+  Object.values(customers).forEach(c=>{const base=[c.name,c.contact||"",(c.tags||[]).map(t=>SUB[t]).join("、")];
+    if(!(c.items||[]).length)rows.push([...base,"","","","","","","","","","",c.note||""]);
+    (c.items||[]).forEach(i=>rows.push([...base,i.p,STG[i.stage],i.next||"",BUY.includes(+i.stage)?i.buy||"":"",BUY.includes(+i.stage)?i.qty||1:"",BUY.includes(+i.stage)?i.days||30:"",runOut(i)||"",SVof(i.p),itemSV(i)||"",Math.round(monthlyEst(i))||"",i.note||""]))});
+  return "\ufeff"+rows.map(r=>r.map(v=>{v=String(v);if(/^[=+\-@]/.test(v))v="'"+v;return `"${v.replace(/"/g,'""')}"`}).join(",")).join("\n");
+}
+async function shareOrDownload(name,text,type){
+  const blob=new Blob([text],{type});
+  try{const file=new File([blob],name,{type});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return}}catch(e){if(e&&e.name==="AbortError")return}
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
+const stamp=()=>today().replace(/-/g,"");
+function backup(){shareOrDownload(`需求追蹤備份_${stamp()}.json`,JSON.stringify({app:"uvaco-tracker",version:1,exported:new Date().toISOString(),customers},null,1),"application/json");
+  try{localStorage.setItem(KEY+"_backup",new Date().toISOString())}catch(e){};setTimeout(render,500)}
+function vSet(){
+  const n=Object.keys(customers).length;let last="",bk="";
+  try{last=localStorage.getItem(KEY+"_saved")||"";bk=localStorage.getItem(KEY+"_backup")||""}catch(e){}
+  const bkDays=bk?Math.floor((Date.now()-new Date(bk))/864e5):null;
+  $("#main").innerHTML=`<div class="set">
+  <div class="box"><h5>💾 備份與還原</h5>
+    <p>資料只存在這支手機的這個 App 裡。換手機、清除瀏覽器資料或刪掉 App 都會讓資料消失，請定期備份，把備份檔存到雲端硬碟或傳給自己。</p>
+    <p>目前 ${n} 位客戶・上次備份：${bk?`${bk.slice(0,10)}（${bkDays} 天前）`:"<b style='color:var(--bad)'>從未備份</b>"}</p>
+    <div class="row"><button class="btn" id="bk">匯出備份檔</button><button class="btn sec" id="rs">從備份檔還原</button><input type="file" id="rf" accept=".json,application/json" hidden></div></div>
+  <div class="box"><h5>📄 匯出表格</h5><p>匯出 CSV，可用 Excel、Google 試算表或 Numbers 開啟。</p>
+    <div class="row"><button class="btn sec" id="csvD">下載 CSV</button><button class="btn sec" id="csvC">複製 CSV</button></div></div>
+  <div class="box"><h5>📲 安裝到主畫面</h5><p>iPhone：用 Safari 開啟 → 分享 → 加入主畫面。<br>Android：用 Chrome 開啟 → 右上選單 → 安裝應用程式／加到主畫面。<br>安裝後可離線使用。</p></div>
+  <div class="box"><h5>⚠️ 清除資料</h5><p>刪除這支手機上的所有客戶資料，無法復原。清除前請先匯出備份。</p>
+    <button class="btn del" id="wipe">清除全部資料</button></div>
+  <div class="note">產品資料：葡眾官網 uvaco.com.tw，2026/11/18 擷取，售價與 SV 以官網公告為準。非官方工具。${last?`<br>最後存檔：${last.replace("T"," ").slice(0,16)}`:""}</div>
+  </div>`;
+  $("#bk").onclick=backup;
+  $("#rs").onclick=()=>$("#rf").click();
+  $("#rf").onchange=async e=>{const f=e.target.files[0];if(!f)return;
+    try{const j=JSON.parse(await f.text());const data=j.customers||j;
+      if(typeof data!=="object"||Array.isArray(data))throw 0;
+      const valid=Object.values(data).filter(c=>c&&c.kind==="customer"&&c.id&&typeof c.name==="string");
+      if(!valid.length)throw 0;
+      const d=$("#dlg");$("#dbody").innerHTML=`<p>備份檔有 ${valid.length} 位客戶。要怎麼還原？</p>
+        <p class="muted" style="font-size:13px">「合併」會保留手機上現有資料，同一位客戶以備份檔為準；「取代」會先清空手機上的資料。</p>
+        <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn sec" id="dc">取消</button><button class="btn sec" id="dm">合併</button><button class="btn del" id="dr">取代</button></div>`;
+      d.showModal();$("#dc").onclick=()=>d.close();
+      const apply=rep=>{if(rep)customers={};valid.forEach(c=>customers[c.id]=c);store._write();d.close();render();toast(`已還原 ${valid.length} 位客戶`)};
+      $("#dm").onclick=()=>apply(false);$("#dr").onclick=()=>apply(true);
+    }catch(err){toast("這不是有效的備份檔")}
+    e.target.value=""};
+  $("#csvD").onclick=()=>shareOrDownload(`需求追蹤_${stamp()}.csv`,csvText(),"text/csv");
+  $("#csvC").onclick=copyCSV;
+  $("#wipe").onclick=()=>{const d=$("#dlg");$("#dbody").innerHTML=`<p>確定清除這支手機上全部 ${n} 位客戶的資料？此動作無法復原。</p><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn sec" id="dc">取消</button><button class="btn del" id="dy">清除</button></div>`;
+    d.showModal();$("#dc").onclick=()=>d.close();$("#dy").onclick=()=>{customers={};store._write();d.close();render();toast("已清除")}};
+}
+async function copyCSV(){
+  try{await navigator.clipboard.writeText(csvText().slice(1));toast("已複製，可貼到 Excel／Google 試算表")}catch(e){toast("無法複製，請改用「下載 CSV」")}
+}
+
+render();
+store.init();
+if("serviceWorker" in navigator&&location.protocol!=="file:"){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
